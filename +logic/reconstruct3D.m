@@ -13,7 +13,8 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     % if set to true, the function will display immediately the results of each step like size of images, detected features, matched features, etc.
     % This is useful for debugging. Each time we will print some description like "Size of x is ..."
     debugging = true;  
-    % Convert the images to grayscale
+    %% 1. Preprocessing
+    % Convert the images to grayscale TODO: consider using color informaiton for the reconstruction
     I1_gray = rgb2gray(I1);
     I2_gray = rgb2gray(I2);
 
@@ -21,11 +22,19 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     I1_gray = undistortImage(I1_gray, camera_params);
     I2_gray = undistortImage(I2_gray, camera_params);
 
+    % TODO: Apply a canny detector to the images to get the edges of the objects in the images
+    % I1_gray_canny = edge(I1_gray, 'Canny');
+    % I2_gray_canny = edge(I2_gray, 'Canny');
+
+    % TODO: Take a look at Hough transformation (i.e Fourier transform) to get lines in the images
+
     % Detect features in the images 
     % TODO: consider changing detection algorithm and getting different point types
     % https://de.mathworks.com/help/vision/ug/point-feature-types.html
-    points1 = detectHarrisFeatures(I1_gray, MinQuality = 0.1);
-    points2 = detectHarrisFeatures(I2_gray, MinQuality = 0.1);
+    
+    %% 2. Feature detection and matching
+    points1 = detectMinEigenFeatures(I1_gray, MinQuality = 0.1);
+    points2 = detectMinEigenFeatures(I2_gray, MinQuality = 0.1);
 
     if debugging
         disp("Points1 is ");
@@ -97,7 +106,7 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     % showMatchedFeatures(I1_gray, I2_gray, matched_points1(inliers), matched_points2(inliers));
     % legend("matched points 1","matched points 2");
 
-    % Compute the camera pose from the essential matrix using estrelpose
+    %% 3. Relative pose estimation
     relPose = estrelpose(E, camera_params.Intrinsics, camera_params.Intrinsics, inlier_points1, inlier_points2);
     if debugging
         disp("Relative pose is ");
@@ -108,9 +117,9 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     % TODO: try to get a lot of points so that we can use more points for the triangulation and get a larger point cloud
     border = 200;  % TODO: consider changing this value, dont hard code it
     roi = [border, border, size(I1_gray, 2) - 2 * border, size(I1_gray, 1) - 2 * border];
-    points1 = detectMinEigenFeatures(I1_gray, 'ROI', roi, MinQuality = 0.005);
+    points1 = detectMinEigenFeatures(I1_gray, 'ROI', roi, MinQuality = 0.05);
     roi = [border, border, size(I2_gray, 2) - 2 * border, size(I2_gray, 1) - 2 * border];   
-    points2 = detectMinEigenFeatures(I2_gray, 'ROI', roi, MinQuality = 0.005);
+    points2 = detectMinEigenFeatures(I2_gray, 'ROI', roi, MinQuality = 0.05);
     [features1, valid_points1] = extractFeatures(I1_gray, points1);
     [features2, valid_points2] = extractFeatures(I2_gray, points2);
     index_pairs = matchFeatures(features1, features2);
