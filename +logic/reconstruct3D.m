@@ -21,29 +21,31 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     I1_gray = undistortImage(I1_gray, camera_params);
     I2_gray = undistortImage(I2_gray, camera_params);
 
-    % Detect features in the images TODO consider changing detection algorithm
-    points1 = detectMinEigenFeatures(I1_gray, MinQuality = 0.1);
-    points2 = detectMinEigenFeatures(I2_gray, MinQuality = 0.1);
+    % Detect features in the images 
+    % TODO: consider changing detection algorithm and getting different point types
+    % https://de.mathworks.com/help/vision/ug/point-feature-types.html
+    points1 = detectHarrisFeatures(I1_gray, MinQuality = 0.1);
+    points2 = detectHarrisFeatures(I2_gray, MinQuality = 0.1);
 
     if debugging
-        disp("Size of points1 is ");
-        disp(size(points1));
-        disp("Size of points2 is ");
-        disp(size(points2));
+        disp("Points1 is ");
+        disp(points1);
+        disp("Points2 is ");
+        disp(points2);
     end
 
     % Extract features from the images
     [features1, valid_points1] = extractFeatures(I1_gray, points1);
     [features2, valid_points2] = extractFeatures(I2_gray, points2);
     if debugging
-        disp("Size of features1 is ");
-        disp(size(features1));
-        disp("Size of features2 is ");
-        disp(size(features2));
-        disp("Size of valid_points1 is ");
-        disp(size(valid_points1));
-        disp("Size of valid_points2 is ");
-        disp(size(valid_points2));
+        disp("features1 is ");
+        disp(features1);
+        disp("features2 is ");
+        disp(features2);
+        disp("valid_points1 is ");
+        disp(valid_points1);
+        disp("valid_points2 is ");
+        disp(valid_points2);
     end
     % UNCOMMENT IF DEBUGGING
     % figure;
@@ -61,13 +63,20 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     % Match the features between the images
     index_pairs = matchFeatures(features1, features2);
     if debugging
-        disp("Size of index_pairs (number of paired features) is ");
+        disp("index_pairs size is ");
         disp(size(index_pairs));
     end
 
     % Retrieve the locations of the corresponding points for each image
     matched_points1 = valid_points1(index_pairs(:, 1));
     matched_points2 = valid_points2(index_pairs(:, 2));
+
+    if debugging
+        disp("matched_points1 is ");
+        disp(matched_points1);
+        disp("matched_points2 is ");
+        disp(matched_points2);
+    end
 
     % Show matched points in an image
     % UNCOMMENT IF DEBUGGING
@@ -96,16 +105,17 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     end
 
     % Recompute matched points but only using points that are in the middle of the image
-    border = 150;  % TODO consider changing this value, dont hard code it
+    % TODO: try to get a lot of points so that we can use more points for the triangulation and get a larger point cloud
+    border = 200;  % TODO: consider changing this value, dont hard code it
     roi = [border, border, size(I1_gray, 2) - 2 * border, size(I1_gray, 1) - 2 * border];
-    points1 = detectMinEigenFeatures(I1_gray, 'ROI', roi, MinQuality = 0.2);
+    points1 = detectMinEigenFeatures(I1_gray, 'ROI', roi, MinQuality = 0.005);
     roi = [border, border, size(I2_gray, 2) - 2 * border, size(I2_gray, 1) - 2 * border];   
-    points2 = detectMinEigenFeatures(I2_gray, 'ROI', roi, MinQuality = 0.2);
+    points2 = detectMinEigenFeatures(I2_gray, 'ROI', roi, MinQuality = 0.005);
     [features1, valid_points1] = extractFeatures(I1_gray, points1);
     [features2, valid_points2] = extractFeatures(I2_gray, points2);
     index_pairs = matchFeatures(features1, features2);
-    matched_points1 = valid_points1(index_pairs(:, 1));
-    matched_points2 = valid_points2(index_pairs(:, 2));
+    matched_points1 = valid_points1.Location(index_pairs(:, 1), :);
+    matched_points2 = valid_points2.Location(index_pairs(:, 2), :);
     % UNCOMMENT IF DEBUGGING
     figure;
     showMatchedFeatures(I1, I2, matched_points1, matched_points2);
@@ -114,22 +124,40 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
     % Compute the 3D points from the camera pose
     camMatrix1 = cameraProjection(camera_params.Intrinsics, rigidtform3d);
     camMatrix2 = cameraProjection(camera_params.Intrinsics, pose2extr(relPose));
-    [point_cloud, reprojection_error, valid_index] = triangulate(matched_points1, matched_points2, camMatrix1, camMatrix2);
-    point_cloud = point_cloud ./ 100;  % convert from cm to m TODO check this value
-    
+    [world_points, reprojection_error, valid_index] = triangulate(matched_points1, matched_points2, camMatrix1, camMatrix2);
+    % TODO: Scale properly, I dont know the units of the camera matrix
+    world_points = world_points / 10; 
+    % TODO: do bundle adjustment
+
+    if debugging
+        disp("world_points size is ");
+        disp(size(world_points));
+        disp("reprojection_error size is ");
+        disp(size(reprojection_error));
+        disp("valid_index size is ");
+        disp(size(valid_index));
+    end
     % Remove points with negative z coordinate and points that are too far away from the camera as they are probably outliers
     % remove points with high reprojection error
     max_reprojection_error = 100;
-    max_z = 5;
-    point_cloud = point_cloud(valid_index & point_cloud(:, 3) < max_z & reprojection_error < max_reprojection_error, :);
-
+    max_z = 100;
+    world_points = world_points(valid_index, :);  % TODO: filter better like described above
+    disp(size(world_points))
     % UNCOMMENT IF DEBUGGING
     figure;
     hold on;
     % Show cameras pose
     plotCamera('Size', 0.05, 'Color', 'r', 'Label', '1');  % plot first camera
     plotCamera('Size', 0.05, 'Color', 'b', 'Label', '2', 'AbsolutePose', relPose);  % plot second camera
-    % Show point cloud and increase point size
+    % Show point cloud by coloring it based on the pixel color of the first image
+    % Get the color of each reconstructed point
+    numPixels = size(I1, 1) * size(I1, 2);
+    allColors = reshape(I1, [numPixels, 3]);
+    colorIdx = sub2ind([size(I1, 1), size(I1, 2)], round(matched_points1(valid_index, 2)), round(matched_points1(valid_index, 1)));
+    
+    color = allColors(colorIdx, :);
+    point_cloud = pointCloud(world_points, 'Color', color);
+
     pcshow(point_cloud,'VerticalAxis', 'y', 'VerticalAxisDir', 'down', 'MarkerSize', 45);
     xlabel('X (m)');
     ylabel('Y (m)');
@@ -137,40 +165,3 @@ function point_cloud = reconstruct3D(I1, I2, camera_params)
 
     % Rotate and zoom the plot
     camorbit(0, -30);
-
-    hold off;
-
-    % Get the number of images
-    % num_images = length(images);
-    % features = cell(num_images, 1);
-    % valid_points = cell(num_images, 1);
-
-    % % Make images gray
-    % for i = 1:num_images
-    %     images{i} = rgb2gray(images{i});
-    % end
-
-    % % Apply a detection algorithm to each image to extract the features
-    % for i = 1:num_images
-    %     % Detect features in the image
-    %     points = detectHarrisFeatures(images{i});
-    %     [features{i}, valid_points{i}] = extractFeatures(images{i}, points);
-    % end
-
-    % % Match the features between the images
-    % index_pairs = cell(num_images - 1, 1);
-    % matched_points1 = cell(num_images - 1, 1);
-    % matched_points2 = cell(num_images - 1, 1);
-
-    % for i = 1:num_images - 1
-    %     % Match the features between the images
-    %     index_pairs{i} = matchFeatures(features{i}, features{i + 1});
-    %     matched_points1{i} = valid_points{i}(index_pairs{i}(:, 1));
-    %     matched_points2{i} = valid_points{i + 1}(index_pairs{i}(:, 2));
-    % end
-
-    % % Show matched points in an image for the 2 first images
-    % figure;
-    % showMatchedFeatures(images{1}, images{2}, matched_points1{1}, matched_points2{1});
-    % legend("matched points 1","matched points 2");
-

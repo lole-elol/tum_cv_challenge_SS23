@@ -2,8 +2,8 @@
 % I2 = imread("kicker/images/dslr_images_undistorted/DSC_6493.JPG");
 % camera_params = logic.loadCameraParams("kicker/dslr_calibration_undistorted/cameras.txt");
 
-I1 = imread("test/image3.jpg");
-I2 = imread("test/image4.jpg");
+I1 = imread("test/image5.jpg");
+I2 = imread("test/image6.jpg");
 
 % show images
 % figure(1);
