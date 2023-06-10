@@ -73,8 +73,6 @@ I2_gray_ = imgaussfilt(I2_gray, 5);
 I2_gray_canny = edge(I2_gray_, 'Canny', [0.1 0.2]);
 I2_gray = imgaussfilt(I2_gray_canny + double(I2_gray)/255, 3);
 
-imshow(I1_gray);
-
 % TODO: Take a look at Hough transformation (i.e Fourier transform) to get lines in the images
 
 % Detect features in the images
