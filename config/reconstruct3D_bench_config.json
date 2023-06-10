@@ -1,0 +1,46 @@
+{
+    "configs": [
+        {
+            "min_quality_1": 0.01,
+            "min_quality_2": 0.01,
+            "e_max_distance": 0.2,
+            "e_confidence": 99.99,
+            "e_max_num_trials": 10000,
+            "roi_border": 200,
+            "max_reprojection_error": 100,
+            "max_z": 100,
+            "world_points_scaling": 0.1,
+            "pc_marker_size": 45,
+            "camera_size_plot_size": 0.03,
+            "canny_gaussian_filter_size": 5,
+            "canny_threshold": [
+                0.1,
+                0.2
+            ],
+            "gauss_canny_combine_filter_size": 3,
+            "debugging": false,
+            "plotting": false
+        },
+        {
+            "min_quality_1": 0.05,
+            "min_quality_2": 0.05,
+            "e_max_distance": 0.2,
+            "e_confidence": 99.99,
+            "e_max_num_trials": 10000,
+            "roi_border": 200,
+            "max_reprojection_error": 100,
+            "max_z": 100,
+            "world_points_scaling": 0.1,
+            "pc_marker_size": 45,
+            "camera_size_plot_size": 0.03,
+            "canny_gaussian_filter_size": 5,
+            "canny_threshold": [
+                0.1,
+                0.3
+            ],
+            "gauss_canny_combine_filter_size": 3,
+            "debugging": false,
+            "plotting": false
+        }
+    ]
+}
