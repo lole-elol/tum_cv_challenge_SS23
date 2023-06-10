@@ -51,29 +51,8 @@ world_points_scaling = p.Results.world_points_scaling;
 pc_marker_size = p.Results.pc_marker_size;
 camera_size_plot_size = p.Results.camera_size_plot_size;
 
-%% 1. Preprocessing
-% Convert the images to grayscale TODO: consider using color informaiton for the reconstruction
-I1_gray = rgb2gray(I1);
-I2_gray = rgb2gray(I2);
-
-% Remove lens distortion from the images
-% TODO: We need to crop (maximum rectangle) the timages to only conatin valid data becasue undinstroting them results in black borders
-% which conflict with the later steps
-%I1_gray = undistortImage(I1_gray, camera_params);
-%I2_gray = undistortImage(I2_gray, camera_params);
-
-% Apply a canny detector to the images to get the edges of the objects in the images
-% pre filter image with gaussian filter to remove noise and improve canny results
-% Merge canny edges and original image with a gaussian filter
-I1_gray_ = imgaussfilt(I1_gray, 5);
-I1_gray_canny = edge(I1_gray_, 'Canny', [0.1 0.2]);
-I1_gray = imgaussfilt(I1_gray_canny + double(I1_gray)/255, 3);
-
-I2_gray_ = imgaussfilt(I2_gray, 5);
-I2_gray_canny = edge(I2_gray_, 'Canny', [0.1 0.2]);
-I2_gray = imgaussfilt(I2_gray_canny + double(I2_gray)/255, 3);
-
-% TODO: Take a look at Hough transformation (i.e Fourier transform) to get lines in the images
+I1_gray = logic.preprocessing(I1,camera_params);
+I2_gray = logic.preprocessing(I2,camera_params);
 
 % Detect features in the images
 % TODO: consider changing detection algorithm and getting different point types
