@@ -18,12 +18,11 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
 %   max_z: The maximum z value of the points (if points too far away, they are not considered)
 %   pc_marker_size: The size of the markers of the point cloud in the plot
 %   camera_size_plot_size: The size of the cameras in the plot
+%   debugging: If set to true, the function will display immediately the results of each step like size of images, detected features, matched features, etc.
+%   plotting: If set to true, the function will display the final point cloud
 % Output:
 %   point_cloud: A 3D point cloud of the environment
 
-% if set to true, the function will display immediately the results of each step like size of images, detected features, matched features, etc.
-% This is useful for debugging. Each time we will print some description like "Size of x is ..."
-debugging = false;
 %% 0. Parse input arguments with parseInputArguments()
 p = inputParser;
 p.addOptional('min_quality_1', 0.01);
@@ -37,6 +36,11 @@ p.addOptional('max_z', 100);
 p.addOptional('world_points_scaling', 0.1)  % TODO: find proper scaling
 p.addOptional('pc_marker_size', 45);
 p.addOptional('camera_size_plot_size', 0.03);
+p.addOptional('debugging', false);
+p.addOptional('plotting', true);
+p.addOptional('canny_gaussian_filter_size', 5);
+p.addOptional('canny_threshold', [0.1 0.2]);
+p.addOptional('gauss_canny_combine_filter_size', 3);
 p.parse(varargin{:});
 
 min_quality_1 = p.Results.min_quality_1;
@@ -50,6 +54,11 @@ max_z = p.Results.max_z;
 world_points_scaling = p.Results.world_points_scaling;
 pc_marker_size = p.Results.pc_marker_size;
 camera_size_plot_size = p.Results.camera_size_plot_size;
+debugging = p.Results.debugging;
+plotting = p.Results.plotting;
+canny_gaussian_filter_size = p.Results.canny_gaussian_filter_size;
+canny_threshold = p.Results.canny_threshold;
+gauss_canny_combine_filter_size = p.Results.gauss_canny_combine_filter_size;
 
 %% 1. Preprocessing
 % Convert the images to grayscale TODO: consider using color informaiton for the reconstruction
@@ -65,13 +74,13 @@ I2_gray = rgb2gray(I2);
 % Apply a canny detector to the images to get the edges of the objects in the images
 % pre filter image with gaussian filter to remove noise and improve canny results
 % Merge canny edges and original image with a gaussian filter
-I1_gray_ = imgaussfilt(I1_gray, 5);
-I1_gray_canny = edge(I1_gray_, 'Canny', [0.1 0.2]);
-I1_gray = imgaussfilt(I1_gray_canny + double(I1_gray)/255, 3);
+I1_gray_ = imgaussfilt(I1_gray, canny_gaussian_filter_size);
+I1_gray_canny = edge(I1_gray_, 'Canny', canny_threshold);
+I1_gray = imgaussfilt(I1_gray_canny + double(I1_gray)/255, gauss_canny_combine_filter_size);
 
-I2_gray_ = imgaussfilt(I2_gray, 5);
-I2_gray_canny = edge(I2_gray_, 'Canny', [0.1 0.2]);
-I2_gray = imgaussfilt(I2_gray_canny + double(I2_gray)/255, 3);
+I2_gray_ = imgaussfilt(I2_gray, canny_gaussian_filter_size);
+I2_gray_canny = edge(I2_gray_, 'Canny', canny_threshold);
+I2_gray = imgaussfilt(I2_gray_canny + double(I2_gray)/255, gauss_canny_combine_filter_size);
 
 % TODO: Take a look at Hough transformation (i.e Fourier transform) to get lines in the images
 
@@ -179,10 +188,12 @@ index_pairs = matchFeatures(features1, features2);
 matched_points1 = valid_points1.Location(index_pairs(:, 1), :);
 matched_points2 = valid_points2.Location(index_pairs(:, 2), :);
 
-% === UNCOMMENT IF DEBUGGING ===
-figure;
-showMatchedFeatures(I1, I2, matched_points1, matched_points2);
-legend("matched points 1","matched points 2");
+% === PLOT OVERLAY VIEW===
+if plotting
+    figure;
+    showMatchedFeatures(I1, I2, matched_points1, matched_points2);
+    legend("matched points 1","matched points 2");
+end
 % ==============================
 
 % Compute the 3D points from the camera pose
@@ -216,18 +227,20 @@ colorIdx = sub2ind([size(I1, 1), size(I1, 2)], round(matched_points1(valid_index
 color = allColors(colorIdx, :);
 point_cloud = pointCloud(world_points, 'Color', color);
 
-% === UNCOMMENT IF DEBUGGING ===
-figure;
-hold on;
-% Show cameras pose
-plotCamera('Size', camera_size_plot_size, 'Color', 'r', 'Label', '1');  % plot first camera
-plotCamera('Size', camera_size_plot_size, 'Color', 'b', 'Label', '2', 'AbsolutePose', relPose);  % plot second camera
-% Show point cloud by coloring it based on the pixel color of the first image
-pcshow(point_cloud,'VerticalAxis', 'y', 'VerticalAxisDir', 'down', 'MarkerSize', pc_marker_size);
-xlabel('X (m)');
-ylabel('Y (m)');
-zlabel('Z (m)');
-% Rotate and zoom the plot
-camorbit(0, -30);
-hold off;
+% === PLOT POINTCLOUD ===
+if plotting
+    figure;
+    hold on;
+    % Show cameras pose
+    plotCamera('Size', camera_size_plot_size, 'Color', 'r', 'Label', '1');  % plot first camera
+    plotCamera('Size', camera_size_plot_size, 'Color', 'b', 'Label', '2', 'AbsolutePose', relPose);  % plot second camera
+    % Show point cloud by coloring it based on the pixel color of the first image
+    pcshow(point_cloud,'VerticalAxis', 'y', 'VerticalAxisDir', 'down', 'MarkerSize', pc_marker_size);
+    xlabel('X (m)');
+    ylabel('Y (m)');
+    zlabel('Z (m)');
+    % Rotate and zoom the plot
+    camorbit(0, -30);
+    hold off;
+end
 % ==============================
