@@ -65,7 +65,6 @@ I2_gray = rgb2gray(I2);
 % Apply a canny detector to the images to get the edges of the objects in the images
 % pre filter image with gaussian filter to remove noise and improve canny results
 % Merge canny edges and original image with a gaussian filter
-
 I1_gray_ = imgaussfilt(I1_gray, 5);
 I1_gray_canny = edge(I1_gray_, 'Canny', [0.1 0.2]);
 I1_gray = imgaussfilt(I1_gray_canny + double(I1_gray)/255, 3);
