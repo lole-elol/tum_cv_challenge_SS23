@@ -1,5 +1,5 @@
-function [pcSeg, idx] = segPointCloud(pc, dist)
-% SEGPOINTCLOUD Segments a point cloud into clusters
+function [pcSeg, idx] = segmentation(pc, dist)
+% SEGMENTATION Segments a point cloud into clusters
 % pc: point cloud
 % dist: distance threshold for segmentation
 % pc_seg: segmented point cloud
