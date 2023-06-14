@@ -1,4 +1,4 @@
-function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
+function [point_cloud, cam_poses] = reconstruct3D(I1, I2, camera_params, varargin)
     % This function takes a set of images and a set of camera parameters and returns a 3D point cloud of the environment.
     % Ressources:
     %   https://de.mathworks.com/help/vision/ug/structure-from-motion-from-two-views.html
@@ -16,10 +16,9 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
     %   e_max_num_trials: The maximum number of trials to find the epipolar lines
     %   max_reprojection_error: The maximum reprojection error of the points
     %   max_z: The maximum z value of the points (if points too far away, they are not considered)
-    %   pc_marker_size: The size of the markers of the point cloud in the plot
-    %   camera_size_plot_size: The size of the cameras in the plot
     % Output:
     %   point_cloud: A 3D point cloud of the environment
+    %   cam_poses: The camera poses of the images
 
     % if set to true, the function will display immediately the results of each step like size of images, detected features, matched features, etc.
     % This is useful for debugging. Each time we will print some description like "Size of x is ..."
@@ -34,9 +33,6 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
     p.addOptional('roi_border', 200);
     p.addOptional('max_reprojection_error', 100);
     p.addOptional('max_z', 100);
-    p.addOptional('world_points_scaling', 0.1)  % TODO: find proper scaling
-    p.addOptional('pc_marker_size', 45);
-    p.addOptional('camera_size_plot_size', 0.03);
     p.parse(varargin{:});
 
     min_quality_1 = p.Results.min_quality_1;
@@ -47,9 +43,6 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
     e_max_num_trials = p.Results.e_max_num_trials;
     max_reprojection_error = p.Results.max_reprojection_error;
     max_z = p.Results.max_z;
-    world_points_scaling = p.Results.world_points_scaling;
-    pc_marker_size = p.Results.pc_marker_size;
-    camera_size_plot_size = p.Results.camera_size_plot_size;
 
     %% 1. Preprocessing
     % Convert the images to grayscale TODO: consider using color informaiton for the reconstruction
@@ -57,8 +50,8 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
     I2_gray = rgb2gray(I2);
 
     % Remove lens distortion from the images
-    I1_gray = undistortImage(I1_gray, camera_params);
-    I2_gray = undistortImage(I2_gray, camera_params);
+    % I1_gray = undistortImage(I1_gray, camera_params);
+    % I2_gray = undistortImage(I2_gray, camera_params);
 
     % TODO: Apply a canny detector to the images to get the edges of the objects in the images
     % I1_gray_canny = edge(I1_gray, 'Canny');
@@ -151,7 +144,7 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
     % ==============================
 
     %% 3. Relative pose estimation
-    relPose = estrelpose(E, camera_params.Intrinsics, camera_params.Intrinsics, inlier_points1, inlier_points2);
+    rel_pose = estrelpose(E, camera_params.Intrinsics, camera_params.Intrinsics, inlier_points1, inlier_points2);
     if debugging
         disp("Relative pose is ");
         disp(relPose);
@@ -178,20 +171,9 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
 
     % Compute the 3D points from the camera pose
     camMatrix1 = cameraProjection(camera_params.Intrinsics, rigidtform3d);
-    camMatrix2 = cameraProjection(camera_params.Intrinsics, pose2extr(relPose));
+    camMatrix2 = cameraProjection(camera_params.Intrinsics, pose2extr(rel_pose));
     [world_points, reprojection_error, valid_index] = triangulate(matched_points1, matched_points2, camMatrix1, camMatrix2);
-    % Scale properly, I dont know the units of the camera matrix
-    world_points = world_points_scaling * world_points; 
     % TODO: do bundle adjustment
-
-    if debugging
-        disp("world_points size is ");
-        disp(size(world_points));
-        disp("reprojection_error size is ");
-        disp(size(reprojection_error));
-        disp("valid_index size is ");
-        disp(size(valid_index));
-    end
 
     % Remove points with negative z coordinate and points that are too far away from the camera as they are probably outliers
     % remove points with high reprojection error
@@ -207,18 +189,6 @@ function point_cloud = reconstruct3D(I1, I2, camera_params, varargin)
     color = allColors(colorIdx, :);
     point_cloud = pointCloud(world_points, 'Color', color);
 
-     % === UNCOMMENT IF DEBUGGING ===
-    figure;
-    hold on;
-    % Show cameras pose
-    plotCamera('Size', camera_size_plot_size, 'Color', 'r', 'Label', '1');  % plot first camera
-    plotCamera('Size', camera_size_plot_size, 'Color', 'b', 'Label', '2', 'AbsolutePose', relPose);  % plot second camera
-    % Show point cloud by coloring it based on the pixel color of the first image
-    pcshow(point_cloud,'VerticalAxis', 'y', 'VerticalAxisDir', 'down', 'MarkerSize', pc_marker_size);
-    xlabel('X (m)');
-    ylabel('Y (m)');
-    zlabel('Z (m)');
-    % Rotate and zoom the plot
-    camorbit(0, -30);
-    hold off;
-    % ==============================
+    cam_poses = [];
+    cam_poses = [cam_poses, rigidtform3d];
+    cam_poses = [cam_poses, rel_pose];

@@ -14,4 +14,7 @@ I2 = imread("test/image8.jpg");
 % load camera params from file "test/params/camera_params.mat"
 camera_params = load("test/params/camera_params.mat").camera_params;
 
-pc = logic.reconstruct3D(I1, I2, camera_params)
+[pc, cam_poses] = logic.reconstruct3D(I1, I2, camera_params);
+disp(cam_poses)
+% show point cloud
+plotting.plotPointCloud(pc, cam_poses);
