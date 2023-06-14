@@ -21,9 +21,6 @@ function plotPointCloud(point_cloud, cam_poses, varargin)
     hold on;
     % Show cameras poses
     for pose=1:numel(cam_poses)
-        % Print camera pose
-        disp(['Camera pose ' num2str(pose) ':']);
-        disp(cam_poses(pose).A);
         % Plot camera
         plotCamera('Location', cam_poses(pose).Translation, 'Orientation', cam_poses(pose).R, ...
             'Size', camera_size_plot_size, 'Color', 'b', 'Opacity', 0);
