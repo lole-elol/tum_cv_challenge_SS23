@@ -13,3 +13,25 @@ main.m
 ```
 
 The program started using `main.m`. All GUI related files are located in the subfolder `+gui/`. `+cb/` contains all callback functions which are need for GUI interactions like "Button Press". The program logic is located in `+logic/`
+
+## Coding conventions
+
+### Code Documentation
+
+Each function should include a comment explaining what it does and defining the input an output parameters. The comment should look as follows:
+
+```matlab
+% FUNCTIONNAME - short description of your function
+%   Optional longer description of your function
+% Inputs:
+%   inputParam: Description of the input parameter
+%   optionalParam = "default value": Description of the optional input parameter
+% Outputs:
+%   outputParam: Description of the output parameter
+```
+
+## Toolboxes:
+MATLAB                                                Version 9.14        (R2023a)
+Computer Vision Toolbox                               Version 10.4        (R2023a)
+Image Processing Toolbox                              Version 11.7        (R2023a)
+Statistics and Machine Learning Toolbox               Version 12.5        (R2023a)
