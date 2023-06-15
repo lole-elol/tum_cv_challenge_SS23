@@ -10,7 +10,7 @@ function plotPointCloud(point_cloud, cam_poses, varargin)
 
     % Define parser
     p = inputParser;
-    p.addOptional('camera_size_plot_size', 0.3);
+    p.addOptional('camera_size_plot_size', 1.0);
     p.addOptional('pc_marker_size', 45);
     p.parse(varargin{:});
 

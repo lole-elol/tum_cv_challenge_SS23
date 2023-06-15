@@ -1,4 +1,4 @@
-function [point_cloud, cam_poses, matched_points] = reconstruct3D(image_1, image_2, camera_params, varargin)
+function [point_cloud, rel_pose, matched_points] = reconstruct3D(image_1, image_2, camera_params, varargin)
     % This function takes a set of images and a set of camera parameters and returns a 3D point cloud of the environment.
     % Ressources:
     %   https://de.mathworks.com/help/vision/ug/structure-from-motion-from-two-views.html
@@ -18,7 +18,7 @@ function [point_cloud, cam_poses, matched_points] = reconstruct3D(image_1, image
     %   max_z: The maximum z value of the points (if points too far away, they are not considered)
     % Output:
     %   point_cloud: A 3D point cloud of the environment
-    %   cam_poses: The camera poses of the images
+    %   rel_pose: The relative pose of the second camera to the first camera
     %   matched_points: The matched points of the images. Mx4 matrix with the x and y coordinates of the points in the first and second image
 
     %% === 0. Parse input arguments ===
@@ -66,8 +66,4 @@ function [point_cloud, cam_poses, matched_points] = reconstruct3D(image_1, image
     point_cloud = logic.getTriangulatedPoints(matched_points1, matched_points2, camera_params, rel_pose, image_1, max_reprojection_error);
 
     %% === 5. prepare output ===
-    cam_poses = [];
-    cam_poses = [cam_poses, rigidtform3d];
-    cam_poses = [cam_poses, rel_pose];
-
     matched_points = [matched_points1.Location, matched_points2.Location];
