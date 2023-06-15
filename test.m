@@ -13,5 +13,10 @@ I2 = imread("test/image8.jpg");
 
 % load camera params from file "test/params/camera_params.mat"
 camera_params = load("test/params/camera_params.mat").camera_params;
-
-pc = logic.reconstruct3D(I1, I2, camera_params)
+tic;
+[pc, rel_pose, matched_points] = logic.reconstruct3D(I1, I2, camera_params);
+toc;
+cam_poses = [rigidtform3d, rel_pose];
+% show matched points and point cloud
+plotting.plotMatchedPoints(I1, I2, matched_points);
+plotting.plotPointCloud(pc, cam_poses);
