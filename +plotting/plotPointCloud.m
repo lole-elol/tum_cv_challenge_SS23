@@ -1,10 +1,10 @@
 function plotPointCloud(point_cloud, cam_poses, varargin)
-    % PLOT Plot the point cloud with the camera poses
+    % PLOTPOINTCLOUD Plot the point cloud with the camera poses
     % Inputs:
-    %   point_cloud - 3D point cloud as a pointCloud object
-    %   cam_poses - camera poses as an array of rigid3d objects
-    %   camera_size_plot_size - size of the camera in the plot
-    %   pc_marker_size - size of the point cloud marker
+    %   point_cloud: 3D point cloud as a pointCloud object
+    %   cam_poses: camera poses as an array of rigid3d objects
+    %   camera_size_plot_size = 1.0: size of the camera plot
+    %   pc_marker_size = 45: size of the point cloud markers
     % Outputs:
     %   None
 

@@ -1,11 +1,11 @@
 function [E, rel_pose, status] = getEpipolarGeometry(matched_points1, matched_points2, camera_params, varargin)
-    % Get the epipolar geometry between two images. If the estimation fails, relpose is set to identity.
+    % GETEPIPOLARGEOMETRY Get the epipolar geometry between two images. If the estimation fails, relpose is set to identity.
     % Input:
     %   matched_points1, matched_points2: matched points between two images
     %   camera_params: camera parameters
-    %   e_max_distance: max distance for inliers
-    %   e_confidence: confidence for RANSAC
-    %   e_max_num_trials: max number of trials for RANSAC
+    %   e_max_distance = 1.5: max distance for RANSAC
+    %   e_confidence = 99.99: confidence for RANSAC
+    %   e_max_num_trials = 1000: max number of trials for RANSAC
     % Output:
     %   E: essential matrix
     %   rel_pose: relative pose between two images

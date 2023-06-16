@@ -1,5 +1,5 @@
 function plotMatchedPoints(image_1,image_2, matched_points)
-    % Plot the matched points on the images
+    % PLOTMATCHEDPOINTS Plot the matched points on the images
     % Input:
     %   image_1, images_2: the two images to be plotted
     %   matched_points: the matched points on the two images. is an array of matched points

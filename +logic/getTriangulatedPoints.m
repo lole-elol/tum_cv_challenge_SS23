@@ -1,6 +1,15 @@
 function [point_cloud] = getTriangulatedPoints(matched_points1, matched_points2, camera_params, rel_pose, varargin)
-    % Get the 3D points from the matched points and the relative pose of thr two cameras
-    % Compute the 3D points from the camera pose
+    % GETTRIANGULATEDPOINTS Compute the 3D points from the camera pose and the matched points
+    % Input:
+    %   matched_points1: matched points in image 1
+    %   matched_points2: matched points in image 2
+    %   camera_params: camera parameters
+    %   rel_pose: relative pose between the two cameras
+    %   image = []: image to get the color of the points
+    %   max_reprojection_error = 5: maximum reprojection error to remove outliers
+    % Output:
+    %   point_cloud: point cloud of the 3D points
+
     p = inputParser;
     p.addOptional('image', []);
     p.addOptional('max_reprojection_error', 5);
