@@ -9,8 +9,8 @@ function [camera_parameters] = loadCameraParams(filename)
     formatSpec = '%d %s %d %d %f %f %f %f';
     
     % Read the camera information from the file
-    header = textscan(file, '%s', 3, 'Delimiter', '\n');
-    data = textscan(file, formatSpec, 'Delimiter', ' ');
+    header = textscan(file, '%s', 3, Delimiter='\n');
+    data = textscan(file, formatSpec, Delimiter=' ');
 
     % Close the file
     fclose(file);
@@ -33,5 +33,5 @@ function [camera_parameters] = loadCameraParams(filename)
     % Make width and height double
     width = double(width);
     height = double(height);
-    camera_parameters = cameraParameters("K",k,"ImageSize",[height,width]);
+    camera_parameters = cameraParameters(K=k,ImageSize=[height,width]);
 end

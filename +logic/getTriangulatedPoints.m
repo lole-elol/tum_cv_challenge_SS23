@@ -23,13 +23,13 @@ function [point_cloud] = getTriangulatedPoints(matched_points1, matched_points2,
     if isempty(image)
         max_z = max(world_points(:, 3));
         color = [world_points(:, 3) / max_z, zeros(size(world_points, 1), 1), zeros(size(world_points, 1), 1)];
-        point_cloud = pointCloud(world_points, 'Color', color);
+        point_cloud = pointCloud(world_points, Color=color);
     else
         points = matched_points1.Location;
         numPixels = size(image, 1) * size(image, 2);
         allColors = reshape(image, [numPixels, 3]);
         colorIdx = sub2ind(size(image), round(points(valid_index, 2)), round(points(valid_index, 1)));
         color = allColors(colorIdx, :);
-        point_cloud = pointCloud(world_points, 'Color', color);
+        point_cloud = pointCloud(world_points, Color=color);
     end
 end

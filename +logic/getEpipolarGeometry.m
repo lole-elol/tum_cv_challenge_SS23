@@ -20,7 +20,7 @@ function [E, rel_pose, status] = getEpipolarGeometry(matched_points1, matched_po
     e_max_num_trials = p.Results.e_max_num_trials;
 
     [E, inliers, status] = estimateEssentialMatrix(matched_points1, matched_points2, camera_params, ...
-    'MaxDistance', e_max_distance, 'Confidence', e_confidence, 'MaxNumTrials', e_max_num_trials);
+    MaxDistance=e_max_distance, Confidence=e_confidence, MaxNumTrials=e_max_num_trials);
     if status ~= 0
         rel_pose = rigidtform3d;
     else
