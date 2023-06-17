@@ -1,6 +1,12 @@
 function [matched_points1, matched_points2] = extractCommonFeatures(image_1, image_2, camera_params, varargin)
-    % Extracts common features from two images and returns 
-    % the essential matrix and the inlier points.
+    % EXTRACTCOMMONFEATURES Extracts common features from two images
+    % Inputs:
+    %   image_1, image_2: images to extract features from
+    %   camera_params: camera parameters
+    %   min_quality = 0.1: minimum quality of the extracted features
+    %   roi_border = 200: border of the region of interest
+    % Outputs:
+    %   matched_points1, matched_points2: matched points in the images
 
     p = inputParser;
     p.addOptional('min_quality', 0.1);

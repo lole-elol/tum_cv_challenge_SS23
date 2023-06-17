@@ -1,5 +1,5 @@
 function [image_out, image_gray, image_canny] = preprocessImage(image, camera_params, varargin)
-    % This function performs preprocessing on the images to prepare them for
+    % PREPROCESSIMAGE Perform preprocessing on the images to prepare them for
     % feature extraction and matching
     % Inputs:
     %   image - the image to be preprocessed
@@ -35,7 +35,8 @@ function [image_out, image_gray, image_canny] = preprocessImage(image, camera_pa
     image_gray = rgb2gray(image);
     image_blured = imgaussfilt(image_gray, canny_gaussian_filter_size);
     image_canny = edge(image_blured, 'Canny', canny_threshold);
-    image_out = imgaussfilt(image_canny + double(image_gray)/255, gauss_canny_combine_filter_size);
+    % TODO: Dont simply add them but maybe make first gray image darker.
+    image_out = imgaussfilt(image_canny + double(image_gray)/255, gauss_canny_combine_filter_size); 
 
     
     
