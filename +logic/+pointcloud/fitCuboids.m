@@ -5,7 +5,8 @@ function [cuboids, segUsed, segRemaining] = fitCuboids(pcSeg, minVolume, varargi
 %  pcSeg: Point cloud clusters
 %  minVolume: Minimum volume of cuboid
 %  removeOverlapping = false: If true, remove overlapping cuboids
-%  overlapThreshold = 4: Minimum number of corners inside cuboid to be considered overlapping
+%  overlapThreshold = 0.9: Percentage of points inside cuboid to consider it overlapping
+%  mergeOverlapping = false: If true, merge overlapping point cloud clusters
 %
 % Outputs
 %  cuboids: Cuboids
@@ -15,11 +16,13 @@ function [cuboids, segUsed, segRemaining] = fitCuboids(pcSeg, minVolume, varargi
 %% Parameters
 p = inputParser;
 addParameter(p, 'removeOverlapping', false);
-addParameter(p, 'overlapThreshold', 4);
+addParameter(p, 'overlapThreshold', 0.9);
+addParameter(p, 'mergeOverlapping', false);
 parse(p, varargin{:});
 
 removeOverlapping = p.Results.removeOverlapping;
 overlapThreshold = p.Results.overlapThreshold;
+mergeOverlapping = p.Results.mergeOverlapping;
 
 %% Fit cuboids
 cuboids = cell(length(pcSeg), 1);
@@ -44,20 +47,23 @@ if removeOverlapping
   overlapping = false(length(cuboids), 1);
 
   for i = 1:length(cuboids)
-    cuboid_a = cuboids{i};
+    pcCuboid = segUsed{i}
 
     for j = 1:length(cuboids)
       if i == j
         continue;
       end
 
-      corners = pointCloud(getCornerPoints(cuboid_a));
-      indices = findPointsInsideCuboid(cuboids{j}, corners);
+      indices = findPointsInsideCuboid(cuboids{j}, pcCuboid);
 
+      percentage = length(indices) / pcCuboid.Count;
 
-      if length(indices) >= overlapThreshold
-        [length(indices), i, j]
+      if percentage >= overlapThreshold
         overlapping(i) = true;
+
+        if mergeOverlapping
+          pcSeg{j} = pcmerge(pcSeg{j}, pcCuboid, 1);
+        end
         break;
       end
     end
