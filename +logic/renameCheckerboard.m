@@ -1,7 +1,11 @@
 function renameCheckerboard(folderName) 
-    % Rename all files in foldername to have the format checkerboard_#.jpg
+    % RENAMECHECKERBOARD Rename all files in foldername to have the format checkerboard_#.jpg
     % This function is an utility function for the checkerboard calibration
     % process.
+    % Inputs:
+    %   folderName - The name of the folder containing the images to be renamed
+    % Outputs:
+    %   None
     
     % Get all files in folder
     files = dir(folderName);
