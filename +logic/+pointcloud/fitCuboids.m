@@ -47,7 +47,7 @@ if removeOverlapping
   overlapping = false(length(cuboids), 1);
 
   for i = 1:length(cuboids)
-    pcCuboid = segUsed{i}
+    pcCuboid = segUsed{i};
 
     for j = 1:length(cuboids)
       if i == j

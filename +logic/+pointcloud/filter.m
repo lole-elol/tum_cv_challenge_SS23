@@ -2,13 +2,12 @@ function [pc] = filter(pc, relativeMaxDist)
 % FILTER - filter outliers from point cloud using z-score
 %
 % Inputs:
-%   pc - point cloud
-%   relativeMaxDist - maximum distance from the model to consider an inlier in standard deviations
+%   pc: point cloud
+%   relativeMaxDist: maximum distance from the model to consider an inlier in standard deviations
 %
 % Outputs:
-%   pc - filtered point cloud
+%   pc: filtered point cloud
 
-% Define the RANSAC parameters
 
 points = pc.Location;
 
