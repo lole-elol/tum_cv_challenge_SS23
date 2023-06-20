@@ -28,10 +28,13 @@ refVector = p.Results.refVector;
 top30 = idx(end-floor(percentage*length(idx)):end);
 % fit a plane to the top 30% points
 top30PC = select(pc, top30);
-[geoPlaneModel,inlierIndices,outlierIndices] = pcfitplane(top30PC, maxDistance, refVector);
+[geoPlaneModel,inlierIndices,outlierIndices] = pcfitplane(top30PC, maxDistance, refVector, maxAngularDistance=1);
 % get the remaining points
 remainingPCTop30 = select(top30PC,outlierIndices);
-remainingPC = select(pc, idx(1:floor(0.7*length(idx))));
+remainingPC = select(pc, idx(1:floor((1-percentage)*length(idx))));
 remainingPC = pcmerge(remainingPC, remainingPCTop30, 0.001);
 % get the plane points
 geoPlanePC = select(top30PC,inlierIndices);
+
+end
+
