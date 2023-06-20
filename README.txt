@@ -40,5 +40,5 @@ MATLAB                                                Version 9.14        (R2023
 Computer Vision Toolbox                               Version 10.4        (R2023a)
 Image Processing Toolbox                              Version 11.7        (R2023a)
 Lidar Toolbox                                         Version 2.3         (R2023a)
+Signal Processing Toolbox                             Version 9.2         (R2023a)
 Statistics and Machine Learning Toolbox               Version 12.5        (R2023a)
-

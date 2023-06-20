@@ -1,5 +1,5 @@
-% P = logic.pointcloud.loadData("test\kicker_dslr_undistorted\points3D_massaged.txt");
-P = logic.pointcloud.loadData("test\delivery_area_dslr_undistorted\points3D_massaged.txt");
+%P = logic.pointcloud.loadData("test/kicker_dslr_undistorted/points3D_massaged.txt");
+P = logic.pointcloud.loadData("test/delivery_area_dslr_undistorted/points3D_massaged.txt");
 
 
 P = logic.pointcloud.filter(P, 3);
