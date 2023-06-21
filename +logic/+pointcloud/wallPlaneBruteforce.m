@@ -1,11 +1,12 @@
 function [planes] = wallPlaneBruteforce(geoPlanes)
-% wallPlaneBruteforce filters out planes that are not orthogonal to ecach other
-% or where the normal vector is not orthogonal to [ 0 0 1]
-% geoPlanes: struct of planes with fileds: Parameters, Normal
-% planes: struct of planes with fileds: Parameters, Normal
-% tanaplh = sin(5)
-% atan2(norm(cross(a,b)), dot(a,b))
-% filter out planes that are not orthogonal to ecach other plane in geoPlanes
+% WALLPLANEBRUTEFORCE retun planes wich are orthogonal to each other and to [0 0 1] aka: walls
+% it is assumed that the walls of a room are orthogonal to each other, so the room has to be a rectangle
+%Input:
+%   geoPlanes: cell array of geometric planes
+%Output:
+%   planes: cell array of geometric planes
+
+% filter out planes that are not orthogonal to each other
 geoPlanes = geoPlanes(cellfun(@(x) ~isempty(x), geoPlanes));
 planes = cell(1, length(geoPlanes));
 for i = 1:length(geoPlanes)
