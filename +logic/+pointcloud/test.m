@@ -1,40 +1,42 @@
 %%%%%%%%%%%%%%%%%% EVALUATE
 
 
-P1 = logic.pointcloud.loadData("test\delivery_area_dslr_undistorted\points3D_massaged.txt");
-P2 = logic.pointcloud.loadData("test\kicker_dslr_undistorted\points3D_massaged.txt");
-P3 = logic.pointcloud.loadData("test\pipes\points3D_massaged.txt");
+% P1 = logic.pointcloud.loadData("test\delivery_area_dslr_undistorted\points3D_massaged.txt");
+% P2 = logic.pointcloud.loadData("test\kicker_dslr_undistorted\points3D_massaged.txt");
+% P3 = logic.pointcloud.loadData("test\pipes\points3D_massaged.txt");
 % P4 = logic.pointcloud.loadData("test\relief\points3D_massaged.txt");
-P5 = logic.pointcloud.loadData("test\terrains\points3D_massaged.txt");
+% P5 = logic.pointcloud.loadData("test\terrains\points3D_massaged.txt");
+% P6 = logic.pointcloud.loadData("test\3D_reconstruct\points3D_reconstruct3D_kicker.txt");
 
 
-[models1, pc1, pcRemaining1] = logic.modelDetection(P1 );
-[models2, pc2, pcRemaining2] = logic.modelDetection(P2 );
-[models3, pc3, pcRemaining3] = logic.modelDetection(P3 );
-% [models4, pc4, pcRemaining4] = logic.modelDetection(P4 );
-[models5, pc5, pcRemaining5] = logic.modelDetection(P5 );
 
-figure; pcshow(pc1);
-hold on
-for i=1:length(models1{3})
-    plot(models1{3}{i});
-end
-plot(models1{1});
+% [models1, pc1, pcRemaining1] = logic.modelDetection(P1 );
+% [models2, pc2, pcRemaining2] = logic.modelDetection(P2 );
+% [models3, pc3, pcRemaining3] = logic.modelDetection(P3 );
+% [models4, pc4, pcRemaining4] = logic.modelDetection(P4, ceilingPercentile=0.3);
+% [models5, pc5, pcRemaining5] = logic.modelDetection(P5 );
+% [models6, pc6, pcRemaining6] = logic.modelDetection(P6, ceilingPercentile=0.3);
 
+% figure; pcshow(pc1);
+% hold on
+% for i=1:length(models1{3})
+%     plot(models1{3}{i});
+% end
+% plot(models1{1});
 
-figure; pcshow(pc2);
-hold on
-for i=1:length(models2{3})
-    plot(models2{3}{i});
-end
-plot(models2{1});
+% figure; pcshow(pc2);
+% hold on
+% for i=1:length(models2{3})
+%     plot(models2{3}{i});
+% end
+% plot(models2{1});
 
-figure; pcshow(pc3);
-hold on
-for i=1:length(models3{3})
-    plot(models3{3}{i});
-end
-plot(models3{1});
+% figure; pcshow(pc3);
+% hold on
+% for i=1:length(models3{3})
+%     plot(models3{3}{i});
+% end
+% plot(models3{1});
 
 % figure; pcshow(pc4);
 % hold on
@@ -43,12 +45,19 @@ plot(models3{1});
 % end
 % plot(models4{1});
 
-figure; pcshow(pc5);
-hold on
-for i=1:length(models5{3})
-    plot(models5{3}{i});
-end
-plot(models5{1});
+% figure; pcshow(pc5);
+% hold on
+% for i=1:length(models5{3})
+%     plot(models5{3}{i});
+% end
+% plot(models5{1});
+
+% figure; pcshow(pc6);
+% hold on
+% for i=1:length(models6{3})
+%     plot(models6{3}{i});
+% end
+% plot(models6{1});
 
 %%%%%%%%%%%%%%%%%%  END EVALUATE
 
