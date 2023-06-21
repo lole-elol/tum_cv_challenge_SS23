@@ -19,6 +19,7 @@ addParameter(p, 'percentage', 0.3, @isnumeric);
 addParameter(p, 'refVector', [0 0 1]);
 addParameter(p, 'windowSize', 5, @isnumeric);
 parse(p, varargin{:});
+
 maxDistance = p.Results.maxDistance;
 percentage = p.Results.percentage;
 refVector = p.Results.refVector;
@@ -50,7 +51,7 @@ pdf_y = zeros(1,length(z_grid)-1);
 for i= 1:length(z_grid)-1
     for j= -(min(windowHalfSize, i-1)):min(windowHalfSize, length(z_grid)-i-1)
         logicalRange = top30Z > z_grid(i+j) & top30Z <= z_grid(i+j+1);
-        
+
         pdf_z(i) = pdf_z(i) + window(j+windowHalfSize+1)*length(top30Z(logicalRange));
         pdf_x(i) = pdf_x(i) + window(j+windowHalfSize+1)*std(top30X(logicalRange));
         pdf_y(i) = pdf_y(i) + window(j+windowHalfSize+1)*std(top30Y(logicalRange));
@@ -63,9 +64,9 @@ pdfPlane = (pdf_x+pdf_y)/2;
 pdfZmax = islocalmax(pdfZnorm) & (pdfZnorm > 0.1);
 pdfPlaneZmax = pdfPlane .* pdfZmax;
 
-[~, planeSpaceIdx] = max(pdfPlaneZmax)
+[~, planeSpaceIdx] = max(pdfPlaneZmax);
 
-zPlane = (z_grid(planeSpaceIdx) + step_size/2)
+zPlane = (z_grid(planeSpaceIdx) + step_size/2);
 planeSpace = [zPlane - maxDistance/2, zPlane + maxDistance/2];
 
 pcRoiIdx = find(pc.Location(:,3) > planeSpace(1) & pc.Location(:,3) < planeSpace(2));
