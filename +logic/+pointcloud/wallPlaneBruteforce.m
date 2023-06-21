@@ -1,6 +1,6 @@
-function [planes] = planeFilter(geoPlanes)
-% PLANEFILTER filters out planes that are not orthogonal to ecach other
-% or where the normal vector is close to [ 0 0 1]
+function [planes] = wallPlaneBruteforce(geoPlanes)
+% wallPlaneBruteforce filters out planes that are not orthogonal to ecach other
+% or where the normal vector is not orthogonal to [ 0 0 1]
 % geoPlanes: struct of planes with fileds: Parameters, Normal
 % planes: struct of planes with fileds: Parameters, Normal
 % tanaplh = sin(5)
