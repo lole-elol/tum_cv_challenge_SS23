@@ -1,5 +1,5 @@
 function [point_cloud, rel_pose, matched_points] = reconstruct3D(image_1, image_2, camera_params, varargin)
-    % This function takes a set of images and a set of camera parameters and returns a 3D point cloud of the environment.
+    % RECONSTRUCT3D Take a set of images and a set of camera parameters and returns a 3D point cloud of the environment.
     % Ressources:
     %   https://de.mathworks.com/help/vision/ug/structure-from-motion-from-two-views.html
     %   https://de.mathworks.com/help/vision/ug/structure-from-motion-from-multiple-views.html
@@ -7,19 +7,17 @@ function [point_cloud, rel_pose, matched_points] = reconstruct3D(image_1, image_
     % Inputs:
     %   image_1, image_2: The two images to reconstruct the 3D environment from
     %   camera_params: The camera parameters of the camera used to take the images. This is a struct of type cameraParameters
-    % Inputs (optional):
-    %   min_quality_1: The minimum quality of the features to detect in the first detection
-    %   min_quality_2: The minimum quality of the features to detect in the second detection (smaller to get more features)
-    %   roi_border: The border of the region of interest (ROI) in the images. This is the number of pixels from the border of the image (second detection)
-    %   e_max_distance: The maximum distance between the epipolar lines and the corresponding points in the second image
-    %   e_confidence: The confidence of the epipolar lines
-    %   e_max_num_trials: The maximum number of trials to find the epipolar lines
-    %   max_reprojection_error: The maximum reprojection error of the points
-    %   max_z: The maximum z value of the points (if points too far away, they are not considered)
-    % Output:
-    %   point_cloud: A 3D point cloud of the environment
+    %   min_quality_1 = 0.1: The minimum quality of the features to detect in the first detection
+    %   min_quality_2 = 0.01: The minimum quality of the features to detect in the second detection
+    %   roi_border = 200: The border around the image to ignore when detecting features
+    %   e_max_distance = 0.2: The maximum distance of a point to the epipolar line to be considered an inlier
+    %   e_confidence = 99.99: The confidence of the estimated essential matrix
+    %   e_max_num_trials = 10000: The maximum number of trials to estimate the essential matrix
+    %   max_reprojection_error = 100: The maximum reprojection error of a point to be considered an inlier
+    % Outputs:
+    %   point_cloud: The 3D point cloud of the environment
     %   rel_pose: The relative pose of the second camera to the first camera
-    %   matched_points: The matched points of the images. Mx4 matrix with the x and y coordinates of the points in the first and second image
+    %   matched_points: The matched points between the two images. Mx4 matrix with the x and y coordinates of the matched points in the first and second image
 
     %% === 0. Parse input arguments ===
     p = inputParser;

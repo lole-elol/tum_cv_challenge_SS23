@@ -5,12 +5,17 @@
 % 0 PINHOLE 6211 4137 3410.34 3409.98 3121.33 2067.07
 
 function [camera_parameters] = loadCameraParams(filename)
+    % LOADCAMERAPARAMS Load the camera parameters from a text file
+    % Input:
+    %   filename - The name of the file to load the camera parameters from
+    % Output:
+    %   camera_parameters - The camera parameters
     file = fopen(filename,'r');
     formatSpec = '%d %s %d %d %f %f %f %f';
     
     % Read the camera information from the file
-    header = textscan(file, '%s', 3, 'Delimiter', '\n');
-    data = textscan(file, formatSpec, 'Delimiter', ' ');
+    header = textscan(file, '%s', 3, Delimiter='\n');
+    data = textscan(file, formatSpec, Delimiter=' ');
 
     % Close the file
     fclose(file);
@@ -33,5 +38,5 @@ function [camera_parameters] = loadCameraParams(filename)
     % Make width and height double
     width = double(width);
     height = double(height);
-    camera_parameters = cameraParameters("K",k,"ImageSize",[height,width]);
+    camera_parameters = cameraParameters(K=k,ImageSize=[height,width]);
 end
