@@ -1,20 +1,58 @@
-%P = logic.pointcloud.loadData("test/kicker_dslr_undistorted/points3D_massaged.txt");
-P = logic.pointcloud.loadData("test/delivery_area_dslr_undistorted/points3D_massaged.txt");
+%%%%%%%%%%%%%%%%%% EVALUATE
 
 
-P = logic.pointcloud.filter(P, 3);
+P1 = logic.pointcloud.loadData("test\delivery_area_dslr_undistorted\points3D_massaged.txt");
+P2 = logic.pointcloud.loadData("test\kicker_dslr_undistorted\points3D_massaged.txt");
+P3 = logic.pointcloud.loadData("test\pipes\points3D_massaged.txt");
+% P4 = logic.pointcloud.loadData("test\relief\points3D_massaged.txt");
+P5 = logic.pointcloud.loadData("test\terrains\points3D_massaged.txt");
 
-% [ceilingPlane, pcCeiling1, pc] = logic.pointcloud.ceilPlane(P, maxDistance=0.2, percentage=0.3, refVector=[0 0 1]);
-% [~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(P);
-% [ceilingPlane, pcCeiling2, pc] = logic.pointcloud.ceilPlane(P, maxDistance=0.01, percentage=0.1, refVector=[0 0 1]);
 
-logic.pointcloud.ceilPlane2(P);
-% pc = pcdenoise(pc, 'NumNeighbors', 50, 'Threshold', 0.5);
-% pcshowpair(pc, pcCeiling2);
+[models1, pc1, pcRemaining1] = logic.modelDetection(P1 );
+[models2, pc2, pcRemaining2] = logic.modelDetection(P2 );
+[models3, pc3, pcRemaining3] = logic.modelDetection(P3 );
+% [models4, pc4, pcRemaining4] = logic.modelDetection(P4 );
+[models5, pc5, pcRemaining5] = logic.modelDetection(P5 );
+
+figure; pcshow(pc1);
+hold on
+for i=1:length(models1{3})
+    plot(models1{3}{i});
+end
+plot(models1{1});
+
+
+figure; pcshow(pc2);
+hold on
+for i=1:length(models2{3})
+    plot(models2{3}{i});
+end
+plot(models2{1});
+
+figure; pcshow(pc3);
+hold on
+for i=1:length(models3{3})
+    plot(models3{3}{i});
+end
+plot(models3{1});
+
+% figure; pcshow(pc4);
 % hold on
-% plot(ceilingPlane);
-% figure
-% pcshowpair(pc, pcde);
+% for i=1:length(models4{3})
+%     plot(models4{3}{i});
+% end
+% plot(models4{1});
+
+figure; pcshow(pc5);
+hold on
+for i=1:length(models5{3})
+    plot(models5{3}{i});
+end
+plot(models5{1});
+
+%%%%%%%%%%%%%%%%%%  END EVALUATE
+
+
 
 
 
