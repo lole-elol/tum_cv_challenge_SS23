@@ -16,7 +16,8 @@ camera_params = logic.loadCameraParams('C:\Users\mariu\Documents\UNI_MariusGhica
 
 %% Step 3: Pre-process the images
 for i = 1:numImages
-    [~, images{i}, ~] = logic.preprocessImage(images{i}, camera_params);
+    images{i} = resampleImage(images{i}, 0.7);
+    [~, ~, images{i}] = logic.preprocessImage(images{i});
 end 
 
 %% Step 3: Detect and extract features
@@ -63,6 +64,7 @@ for i = 2:numImages
     prevPoints = currPoints;  
 end
 
+
 %plotting.plotPointCloud(world_points, camPoses{:,2});
 
 %% Step 4: Dense Reconstruction
@@ -71,7 +73,7 @@ I1 = images{1};
 prevPoints = detectMinEigenFeatures(I1, MinQuality=0.001);
 
 % Create the point tracker object to track the points across views.
-tracker = vision.PointTracker(NumPyramidLevels=6);
+tracker = vision.PointTracker(MaxBidirectionalError=1,NumPyramidLevels=6);
 
 % Initialize the point tracker.
 prevPoints = prevPoints.Location;
@@ -110,12 +112,30 @@ camPoses = poses(vSet);
 
 
 % Triangulate initial locations for the 3-D world points.
-[xyzPoints, ~, goodIdx] = triangulateMultiview(tracks, camPoses, camera_params.Intrinsics);
+[xyzPoints, ~, ~] = triangulateMultiview(tracks, camPoses, camera_params.Intrinsics);
 
 % Refine the 3-D world points and camera poses.
-[xyzPoints, camPoses, reprojectionErrors] = bundleAdjustment(...
-    xyzPoints, tracks, camPoses, camera_params.Intrinsics, FixedViewId=1, ...
-    PointsUndistorted=true);
-goodIdx = goodIdx  & (xyzPoints(:, 3) > 0) & (reprojectionErrors < 5);
+[xyzPoints, camPoses, reprojectionErrors] = bundleAdjustment(xyzPoints, tracks, camPoses, camera_params.Intrinsics);
+goodIdx = (reprojectionErrors < 5);
 xyzPoints = xyzPoints(goodIdx, :);
-plotting.plotPointCloud(xyzPoints, camPoses{:,2});
+% plotting.plotPointCloud(xyzPoints, camPoses{:,2});
+
+
+
+function scaledImage = resampleImage(inputImage,scale)
+    % RESAMPLEIMAGE - This function samples down the input image to a desired size    
+    % Inputs:
+    %   inputImage: either RGB (MxNx3) or grayscale (MxN) image
+    %   scale: scaling factor    
+    % Outputs:
+    %   croppedImage: the sampled image with the desired size
+
+    sz = size(inputImage(:,:,1));
+    xg = 1:sz(1);
+    yg = 1:sz(2);
+
+    F = griddedInterpolant({xg,yg},double(inputImage));
+    xq = (0:1/scale:sz(1)-1/scale)';
+    yq = (0:1/scale:sz(2)-1/scale)';
+    scaledImage = uint8(F({xq,yq}));
+end

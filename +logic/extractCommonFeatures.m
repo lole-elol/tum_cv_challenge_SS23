@@ -1,4 +1,4 @@
-function [matched_points1, matched_points2] = extractCommonFeatures(image_1, image_2, camera_params, varargin)
+function [matched_points1, matched_points2] = extractCommonFeatures(image_1, image_2, ~, varargin)
     % Extracts common features from two images and returns 
     % the essential matrix and the inlier points.
 

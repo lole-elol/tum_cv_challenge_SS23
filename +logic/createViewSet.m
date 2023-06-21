@@ -1,7 +1,7 @@
-function [vSet, prevFeatures, prevPoints] = createViewSet(image_1, camera_params, varargin)
+function [vSet, prevFeatures, prevPoints] = createViewSet(image_1, ~, varargin)
     p = inputParser;
-    p.addOptional('numOctaves', 12);
-    p.addOptional('roi_border', 50);
+    p.addOptional('numOctaves', 15);
+    p.addOptional('roi_border', 20);
     p.parse(varargin{:});
     numOctaves = p.Results.numOctaves;
     roi_border = p.Results.roi_border;
