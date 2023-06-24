@@ -6,6 +6,6 @@ function pc = loadData(path)
 %   pc - point cloud object
 
 data = readmatrix(path);
-pc = pointCloud(data(:,2:4), "Color", data(:,5:7));
+pc = pointCloud(data(:,2:4));
 
 end

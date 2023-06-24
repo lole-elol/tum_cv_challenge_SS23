@@ -30,8 +30,8 @@ denoiseThreshold = p.Results.denoiseThreshold;
 
 %% Segmentation
 % scale minDistStd and minP to absolute values
-minDist = minDistStd * sqrt(vecnorm(std(pc.Location)))
-minN = minP * pc.Count
+minDist = minDistStd * sqrt(vecnorm(std(pc.Location)));
+minN = minP * pc.Count;
 
 % segment
 [labels, numClusters] = pcsegdist(pc, minDist);
