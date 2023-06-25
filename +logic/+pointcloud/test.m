@@ -8,7 +8,17 @@
 % P5 = logic.pointcloud.loadData("test\terrains\points3D_massaged.txt");
 % P6 = logic.pointcloud.loadData("test\3D_reconstruct\points3D_reconstruct3D_kicker.txt");
 
+P7 = logic.pointcloud.loadData("test\3D_reconstruct\points3D_reconstruct_deliveryArea1.txt");
+% P8 = logic.pointcloud.loadData("test\3D_reconstruct\points3D_reconstruct_deliveryArea2.txt");
+% P9 = logic.pointcloud.loadData("test\3D_reconstruct\points3D_reconstruct_deliveryArea3.txt");
 
+%%%%  Playing with rotation %%%
+rotationAngles = [90 0 0];
+translation = [0 0 0];
+
+tform = rigidtform3d(rotationAngles,translation);
+P7 = pctransform(P7,tform);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % [models1, pc1, pcRemaining1] = logic.modelDetection(P1 );
 % [models2, pc2, pcRemaining2] = logic.modelDetection(P2 );
@@ -16,6 +26,10 @@
 % [models4, pc4, pcRemaining4] = logic.modelDetection(P4, ceilingPercentile=0.3);
 % [models5, pc5, pcRemaining5] = logic.modelDetection(P5 );
 % [models6, pc6, pcRemaining6] = logic.modelDetection(P6, ceilingPercentile=0.3);
+
+[models7, pc7, pcRemaining7] = logic.modelDetection(pcrot);
+% [models8, pc8, pcRemaining8] = logic.modelDetection(P8, ceilingPercentile=0.3);
+% [models9, pc9, pcRemaining9] = logic.modelDetection(P9, ceilingPercentile=0.3);
 
 % figure; pcshow(pc1);
 % hold on
@@ -58,6 +72,28 @@
 %     plot(models6{3}{i});
 % end
 % plot(models6{1});
+
+figure; pcshow(pc7);
+hold on
+for i=1:length(models7{3})
+    plot(models7{3}{i});
+end
+plot(models7{1});
+
+% figure; pcshow(pc8);
+% hold on
+% for i=1:length(models8{3})
+%     plot(models8{3}{i});
+% end
+% plot(models8{1});
+
+
+% figure; pcshow(pc9);
+% hold on
+% for i=1:length(models9{3})
+%     plot(models9{3}{i});
+% end
+% plot(models9{1});
 
 %%%%%%%%%%%%%%%%%%  END EVALUATE
 
