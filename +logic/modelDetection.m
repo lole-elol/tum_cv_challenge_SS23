@@ -56,8 +56,10 @@ pc = logic.pointcloud.filter(pc, outlierDist);
 
 %% Detect floor and ceiling
 [~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc);
-
 pc = removeInvalidPoints(pc);
+
+% Rotate point cloud so that floor is horizontal
+pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
 
 [ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=ceilingDist, percentage=ceilingPercentile, refVector=floorPlane.Normal, windowSize=windowSize);
 
