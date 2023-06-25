@@ -1,5 +1,5 @@
 function [image_out, image_gray, image_canny] = preprocessImage(image, camera_params, varargin)
-    % This function performs preprocessing on the images to prepare them for
+    % PREPROCESSIMAGE Perform preprocessing on the images to prepare them for
     % feature extraction and matching
     % Inputs:
     %   image - the image to be preprocessed

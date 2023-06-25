@@ -1,6 +1,15 @@
 function [point_cloud] = getTriangulatedPoints(matched_points1, matched_points2, camera_params, rel_pose, varargin)
-    % Get the 3D points from the matched points and the relative pose of thr two cameras
-    % Compute the 3D points from the camera pose
+    % GETTRIANGULATEDPOINTS Compute the 3D points from the camera pose and the matched points
+    % Input:
+    %   matched_points1: matched points in image 1
+    %   matched_points2: matched points in image 2
+    %   camera_params: camera parameters
+    %   rel_pose: relative pose between the two cameras
+    %   image = []: image to get the color of the points
+    %   max_reprojection_error = 5: maximum reprojection error to remove outliers
+    % Output:
+    %   point_cloud: point cloud of the 3D points
+
     p = inputParser;
     p.addOptional('image', []);
     p.addOptional('max_reprojection_error', 5);
@@ -23,13 +32,13 @@ function [point_cloud] = getTriangulatedPoints(matched_points1, matched_points2,
     if isempty(image)
         max_z = max(world_points(:, 3));
         color = [world_points(:, 3) / max_z, zeros(size(world_points, 1), 1), zeros(size(world_points, 1), 1)];
-        point_cloud = pointCloud(world_points, 'Color', color);
+        point_cloud = pointCloud(world_points, Color=color);
     else
         points = matched_points1.Location;
         numPixels = size(image, 1) * size(image, 2);
         allColors = reshape(image, [numPixels, 3]);
         colorIdx = sub2ind(size(image), round(points(valid_index, 2)), round(points(valid_index, 1)));
         color = allColors(colorIdx, :);
-        point_cloud = pointCloud(world_points, 'Color', color);
+        point_cloud = pointCloud(world_points, Color=color);
     end
 end
