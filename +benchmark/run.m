@@ -17,7 +17,6 @@ testReconstruction = p.Results.testReconstruction;
 testDetection = p.Results.testDetection;
 
 disp('Running Benchmark!')
-disp('')
 disp('Loading configuration .mat file');
 load(configPath);
 
@@ -57,18 +56,18 @@ if testDetection
     cuboidInlier = detection.cuboidInlier;
     cuboidOverlap = detection.cuboidOverlap;
 
-    paramComb = combinations(outlierDist, clusterDist, clusterPercentile, clusterDenoise, clusterDenoiseNeighbours, ceilingPercentile, ceilingDist, ceilingWindowSize, cuboidVolume, cuboidInlier, cuboidOverlap);
+    detectionParams = combinations(outlierDist, clusterDist, clusterPercentile, clusterDenoise, clusterDenoiseNeighbours, ceilingPercentile, ceilingDist, ceilingWindowSize, cuboidVolume, cuboidInlier, cuboidOverlap);
 
     % Save parameter combinations
-    save(append(outPath, '/paramComb.mat'), 'paramComb');
+    save(append(outPath, '/detectionParams.mat'), 'detectionParams');
 
-    disp('Found ' + string(size(paramComb, 1)) + ' parameter combinations');
+    disp('Found ' + string(size(detectionParams, 1)) + ' parameter combinations');
     disp('Running benchmark ...');
     fprintf('\n')
 
-    outData = cell(size(paramComb, 1), size(testPCs, 1));
-    for i=1:size(paramComb, 1)
-        params = paramComb(i, :);
+    outData = cell(size(detectionParams, 1), size(testPCs, 1));
+    for i=1:size(detectionParams, 1)
+        params = detectionParams(i, :);
 
         disp('Running parameter combination ' + string(i));
         disp('----------------------------------------');
