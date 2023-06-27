@@ -10,10 +10,10 @@ function [models, pc, pcRemaining] = modelDetection(pc, varargin)
 %   clusterDenoiseNeighbours = 10: number of neighbours for denoising clusters
 %   ceilingPercentile = 0.2: Percentile of points to use for ceiling detection
 %   ceilingDist = 0.2: Maximum distance between points for ceiling detection
+%   ceilingWindowSize = 5: Size of window for ceiling detection
 %   cuboidVolume = 0.1: Minimum volume of a cuboid
 %   cuboidInlier = 3: Minimum percentage of inlier cuboids by volume in standard deviations
 %   cuboidOverlap = 0.9: Percentage of points inside cuboid to consider it overlapping
-%   windowSize = 5: Size of window for ceiling detection
 %
 % Outputs:
 %   models: Cell array of detected models (floor, ceiling, cuboids)
@@ -30,13 +30,13 @@ p.addParameter('outlierDist', 3, validatePosScalar);
 p.addParameter('clusterDist', 0.1, validatePosScalar);
 p.addParameter('clusterPercentile', 0.0006, validatePercentile);
 p.addParameter('clusterDenoise', 0.5, validatePosScalar);
-p.addParameter('clusterDenoiseNeighbours', 10, validatePosInt);
+p.addParameter('clusterDenoiseNeighbours', 10, validatePosScalar);
 p.addParameter('ceilingPercentile', 0.2, validatePercentile);
 p.addParameter('ceilingDist', 0.2, validatePosScalar);
+p.addParameter('ceilingWindowSize', 5, validatePosScalar);
 p.addParameter('cuboidVolume', 0.1, validatePosScalar);
 p.addParameter('cuboidInlier', 3, validatePosScalar);
 p.addParameter('cuboidOverlap', 0.9, validatePercentile);
-p.addParameter('windowSize', 5, validatePosInt);
 p.parse(varargin{:});
 
 outlierDist = p.Results.outlierDist;
@@ -46,10 +46,10 @@ clusterDenoise = p.Results.clusterDenoise;
 clusterDenoiseNeighbours = p.Results.clusterDenoiseNeighbours;
 ceilingPercentile = p.Results.ceilingPercentile;
 ceilingDist = p.Results.ceilingDist;
+ceilingWindowSize = p.Results.ceilingWindowSize;
 cuboidVolume = p.Results.cuboidVolume;
 cuboidInlier = p.Results.cuboidInlier;
 cuboidOverlap = p.Results.cuboidOverlap;
-windowSize = p.Results.windowSize;
 
 %% Remove outliers
 pc = logic.pointcloud.filter(pc, outlierDist);
@@ -61,7 +61,7 @@ pc = removeInvalidPoints(pc);
 % Rotate point cloud so that floor is horizontal
 pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
 
-[ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=ceilingDist, percentage=ceilingPercentile, refVector=floorPlane.Normal, windowSize=windowSize);
+[ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=ceilingDist, percentage=ceilingPercentile, refVector=floorPlane.Normal, windowSize=ceilingWindowSize);
 
 %% Detect cuboids
 [seg, ~, ~, pcSegRemaining] = logic.pointcloud.segmentation(pc, minDist=clusterDist, minP=clusterPercentile, denoise=true, denoiseNeighbours=clusterDenoiseNeighbours, denoiseThreshold=clusterDenoise);

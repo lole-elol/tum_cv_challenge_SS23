@@ -49,7 +49,7 @@ function [pointCloudInstance, relPose, matchedPoints] = reconstruct3D(image1, im
 
     %% ===  2. Feature detection and matching ===
     [matchedPoints1, matchedPoints2] = logic.reconstruct3D.extractCommonFeatures(imagePreprocessed1, imagePreprocessed2, cameraParams, minQuality=minQuality1, roiBorder=0);
-    
+
     %% === 3. Epipolar geometry: estimate essential matrix and relative pose of the cameras ===
     [E, relPose, status] = logic.reconstruct3D.getEpipolarGeometry(matchedPoints1, matchedPoints2, cameraParams, ...
         eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials);
@@ -57,7 +57,7 @@ function [pointCloudInstance, relPose, matchedPoints] = reconstruct3D(image1, im
         error("Could not estimate the essential matrix");
     end
 
-    %% === 4. Triangulation === 
+    %% === 4. Triangulation ===
     % Get more features from the images to generate a bigger point cloud
     [matchedPoints1, matchedPoints2] = logic.reconstruct3D.extractCommonFeatures(imagePreprocessed1, imagePreprocessed2, cameraParams, minQuality=minQuality2, roiBorder=roiBorder);
     % Triangulate the points

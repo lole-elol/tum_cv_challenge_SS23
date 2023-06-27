@@ -40,8 +40,10 @@ Each function should include a comment explaining what it does and defining the 
 ### Function conventions
 
 - Use `camelCase` for functions.
-- No indention inside a function. Only indent if/for/while statements. 
+- No indention inside a function. Only indent if/for/while statements.
 - Use `Name=Value` for function arguments instead of `"Name", "Value"`. E.g.:
+
+
 ```matlab
 function outputVar = helloWorld(inputVar)
 % HELLOWORLD displays hello world and checks if 1 is actually 1
@@ -66,3 +68,10 @@ Image Processing Toolbox                              Version 11.7        (R2023
 Lidar Toolbox                                         Version 2.3         (R2023a)
 Signal Processing Toolbox                             Version 9.2         (R2023a)
 Statistics and Machine Learning Toolbox               Version 12.5        (R2023a)
+
+## Data
+
+Data to large to be transmitted/handled by git is accessible over [lrz.de](lrz.de).
+
+- [Test Data](https://syncandshare.lrz.de/getlink/fiW28ckD2bDDu6u2jVv7m7/test): Demo Images and Pointclouds. Download this data into the root of the project
+- [Benchmark Data](https://syncandshare.lrz.de/getlink/fi8T7n2HSZSyuuPH63AWik/): Results from Benchmarks. Download this into `+benchmark/demoData/` to analyse the results
