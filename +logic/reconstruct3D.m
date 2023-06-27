@@ -42,16 +42,16 @@ function [point_cloud, rel_pose, matched_points] = reconstruct3D(image_1, image_
     % ==================================
 
     %% === 1. Preprocessing ===
-    [image_1_preprocessed, image_1_gray, image_1_canny] = logic.preprocessImage(image_1, camera_params);
-    [image_2_preprocessed, image_2_gray, image_2_canny] = logic.preprocessImage(image_2, camera_params);
+    [image_1_preprocessed, image_1_gray, image_1_canny] = logic.reconstruct3D.preprocessImage(image_1, camera_params);
+    [image_2_preprocessed, image_2_gray, image_2_canny] = logic.reconstruct3D.preprocessImage(image_2, camera_params);
     image_1_preprocessed  = image_1_gray;
     image_2_preprocessed  = image_2_gray;
 
     %% ===  2. Feature detection and matching ===
-    [matched_points1, matched_points2] = logic.extractCommonFeatures(image_1_preprocessed, image_2_preprocessed, camera_params, min_quality=min_quality_1, roi_border=0);
+    [matched_points1, matched_points2] = logic.reconstruct3D.extractCommonFeatures(image_1_preprocessed, image_2_preprocessed, camera_params, min_quality=min_quality_1, roi_border=0);
     
     %% === 3. Epipolar geometry: estimate essential matrix and relative pose of the cameras ===
-    [E, rel_pose, status] = logic.getEpipolarGeometry(matched_points1, matched_points2, camera_params, ...
+    [E, rel_pose, status] = logic.reconstruct3D.getEpipolarGeometry(matched_points1, matched_points2, camera_params, ...
         e_max_distance=e_max_distance, e_confidence=e_confidence, e_max_num_trials=e_max_num_trials);
     if status ~= 0
         error("Could not estimate the essential matrix");
@@ -59,9 +59,9 @@ function [point_cloud, rel_pose, matched_points] = reconstruct3D(image_1, image_
 
     %% === 4. Triangulation === 
     % Get more features from the images to generate a bigger point cloud
-    [matched_points1, matched_points2] = logic.extractCommonFeatures(image_1_preprocessed, image_2_preprocessed, camera_params, min_quality=min_quality_2, roi_border=roi_border);
+    [matched_points1, matched_points2] = logic.reconstruct3D.extractCommonFeatures(image_1_preprocessed, image_2_preprocessed, camera_params, min_quality=min_quality_2, roi_border=roi_border);
     % Triangulate the points
-    point_cloud = logic.getTriangulatedPoints(matched_points1, matched_points2, camera_params, rel_pose, image_1, max_reprojection_error);
+    point_cloud = logic.reconstruct3D.getTriangulatedPoints(matched_points1, matched_points2, camera_params, rel_pose, image_1, max_reprojection_error);
 
     %% === 5. prepare output ===
     matched_points = [matched_points1.Location, matched_points2.Location];
