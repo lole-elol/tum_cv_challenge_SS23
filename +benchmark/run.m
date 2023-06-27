@@ -62,6 +62,7 @@ if testDetection
     save(append(outPath, '/detectionParams.mat'), 'detectionParams');
 
     disp('Found ' + string(size(detectionParams, 1)) + ' parameter combinations');
+    input('Press enter to continue ...');
     disp('Running benchmark ...');
     fprintf('\n')
 
@@ -89,10 +90,13 @@ if testDetection
             pc = testPCs{j};
             disp('Running point cloud ' + string(j) + ' of ' + string(size(testPCs, 1)));
 
+            tic
             [models, pcFilter, pcRemaining] = logic.modelDetection(pc, outlierDist=params.outlierDist, clusterDist=params.clusterDist, clusterPercentile=params.clusterPercentile, clusterDenoise=params.clusterDenoise, clusterDenoiseNeighbours=params.clusterDenoiseNeighbours, ceilingPercentile=params.ceilingPercentile, ceilingDist=params.ceilingDist, ceilingWindowSize=params.ceilingWindowSize, cuboidVolume=params.cuboidVolume, cuboidInlier=params.cuboidInlier, cuboidOverlap=params.cuboidOverlap);
+            t = toc;
 
-            outData{i, j} = {models, pcFilter, pcRemaining};
+            outData{i, j} = {models, pcFilter, pcRemaining, t};
 
+            disp('Time: ' + string(t) + 's');
         end
 
         fprintf('\n')
