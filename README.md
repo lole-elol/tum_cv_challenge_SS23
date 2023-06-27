@@ -34,6 +34,30 @@ Each function should include a comment explaining what it does and defining the 
 %   outputParam: Description of the output parameter
 ```
 
+### Variable conventions
+- Use `camelCase` for variables.
+
+### Function conventions
+
+- Use `camelCase` for functions.
+- No indention inside a function. Only indent if/for/while statements. 
+- Use `Name=Value` for function arguments instead of `"Name", "Value"`. E.g.:
+```matlab
+function outputVar = helloWorld(inputVar)
+% HELLOWORLD displays hello world and checks if 1 is actually 1
+% Inputs:
+%   inputVar: some input that is irrelebant
+% Outputs:
+%   outputVar: some output that is always 1
+disp("hello world!");
+if 1 ~= 1
+  disp("Everything is a lie");
+  status = callInCaseOfEmergency(destroyWorld=true)
+end
+outputVar = 1;
+end
+```
+
 ## Toolboxes:
 (command: `ver`)
 MATLAB                                                Version 9.14        (R2023a)
