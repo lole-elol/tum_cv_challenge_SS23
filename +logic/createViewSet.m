@@ -1,6 +1,6 @@
 function [vSet, prevFeatures, prevPoints] = createViewSet(image_1, ~, varargin)
     p = inputParser;
-    p.addOptional('numOctaves', 15);
+    p.addOptional('numOctaves', 20);
     p.addOptional('roi_border', 20);
     p.parse(varargin{:});
     numOctaves = p.Results.numOctaves;

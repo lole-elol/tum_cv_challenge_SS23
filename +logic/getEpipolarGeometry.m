@@ -11,8 +11,8 @@ function [E, rel_pose, inliers] = getEpipolarGeometry(matchedPoints1, matchedPoi
     %   rel_pose: relative pose between two images
     %   status: 0 if success, else if failed
     p = inputParser;
-    p.addOptional('e_max_distance', 0.15);
-    p.addOptional('e_confidence', 99.9);
+    p.addOptional('e_max_distance', 5);
+    p.addOptional('e_confidence', 99.5);
     p.addOptional('e_max_num_trials', 100000);
     p.addOptional('e_valid_point_fraction', 0.8);
     p.parse(varargin{:});
@@ -37,7 +37,7 @@ function [E, rel_pose, inliers] = getEpipolarGeometry(matchedPoints1, matchedPoi
     % validPointFraction is the fraction of inlier points that project in
     % front of both cameras. If the this fraction is too small, then the
     % fundamental matrix is likely to be incorrect.
-    % if validPointFraction > e_valid_point_fraction % TODO: check if this is a good threshold
-    %    return;
-    % end
+     if validPointFraction > e_valid_point_fraction % TODO: check if this is a good threshold
+        return;
+     end
 end
