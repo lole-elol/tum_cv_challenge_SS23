@@ -1,38 +1,38 @@
-% I1 = imread("kicker/images/dslr_images_undistorted/DSC_6492.JPG");
-% I2 = imread("kicker/images/dslr_images_undistorted/DSC_6493.JPG");
-% camera_params = logic.loadCameraParams("kicker/dslr_calibration_undistorted/cameras.txt");
+% image1 = imread("kicker/images/dslr_images_undistorted/DSC_6492.JPG");
+% image2 = imread("kicker/images/dslr_images_undistorted/DSC_6493.JPG");
+% cameraParams = logic.loadCameraParams("kicker/dslr_calibration_undistorted/cameras.txt");
 
-I1 = imread("test/image7.jpg");
-I2 = imread("test/image8.jpg");
+image1 = imread("test/image7.jpg");
+image2 = imread("test/image8.jpg");
 
 % show images
 % figure(1);
-% imshow(I1);
+% imshow(image1);
 % figure(2);
-% imshow(I2);
+% imshow(image2);
 
-save_pc = false;
-load_pc = false;
-load_file = "test/point_clouds/point_cloud06-16-2023_15-00-32.ply";
+savePointCloud = false;
+loadPointCloud = false;
+loadFile = "test/point_clouds/point_cloud06-16-2023_15-00-32.ply";
 
 
-if load_pc
-    point_cloud = pcread(load_file);
+if loadPointCloud
+    pointCloudInstance = pcread(loadFile);
 else
-    % load camera params from file "test/params/camera_params.mat"
-    camera_params = load("test/params/camera_params.mat").camera_params;
+    % load camera params from file "test/params/cameraParams.mat"
+    cameraParams = load("test/params/camera_params.mat").camera_params;
     tic;
-    [point_cloud, rel_pose, matched_points] = logic.reconstruct3D(I1, I2, camera_params);
+    [pointCloudInstance, relPose, matchedPoints] = logic.reconstruct3D(image1, image2, cameraParams);
     toc;
 end
 
-if save_pc
-    date_now = datestr(now,'mm-dd-yyyy_HH-MM-SS');
-    pcwrite(point_cloud, "test/point_clouds/point_cloud"+ date_now +".ply");
+if savePointCloud
+    dateNow = datestr(now,'mm-dd-yyyy_HH-MM-SS');
+    pcwrite(pointCloudInstance, "test/point_clouds/pointCloud"+ dateNow +".ply");
 end
 
 
-cam_poses = [rigidtform3d, rel_pose];
+camPoses = [rigidtform3d, relPose];
 % show matched points and point cloud
-plotting.plotMatchedPoints(I1, I2, matched_points);
-plotting.plotPointCloud(point_cloud, cam_poses);
+plotting.plotMatchedPoints(image1, image2, matchedPoints);
+plotting.plotPointCloud(pointCloudInstance, camPoses);
