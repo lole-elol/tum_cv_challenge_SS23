@@ -6,7 +6,7 @@ if exist('images','var') == 0  % Load the images if they are not already loaded 
     imageFiles = dir(fullfile(imageDir, '*.JPG')); % Assuming JPEG format for the images TODO: add support for other formats
 
     numImages = numel(imageFiles);
-    numImages = 10;  % TODO: remove this line, it is only for testing purposes
+    numImages = 15;  % TODO: remove this line, it is only for testing purposes
     images = cell(1, numImages);
 
     % Load the images
