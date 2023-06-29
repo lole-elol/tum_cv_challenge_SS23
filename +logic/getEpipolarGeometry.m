@@ -37,7 +37,7 @@ function [E, rel_pose, inliers] = getEpipolarGeometry(matchedPoints1, matchedPoi
     % validPointFraction is the fraction of inlier points that project in
     % front of both cameras. If the this fraction is too small, then the
     % fundamental matrix is likely to be incorrect.
-     if validPointFraction > e_valid_point_fraction % TODO: check if this is a good threshold
+     if validPointFraction > eValidPointFraction % TODO: check if this is a good threshold
         return;
      end
 end
