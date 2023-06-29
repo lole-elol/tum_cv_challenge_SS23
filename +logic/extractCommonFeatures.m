@@ -32,5 +32,4 @@ function [matched_points1, matched_points2] = extractCommonFeatures(image_1, ima
     % Retrieve the locations of the corresponding points for each image
     matched_points1 = valid_points1(index_pairs(:, 1));
     matched_points2 = valid_points2(index_pairs(:, 2));
-
 end
