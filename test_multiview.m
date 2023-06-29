@@ -3,6 +3,8 @@
 
 if exist('images','var') == 0  % Load the images if they are not already loaded yet
     imageDir = "test/delivery_area_dslr_undistorted/images";
+    % imageDir = "test/old_computer/images";
+    
     imageFiles = dir(fullfile(imageDir, '*.JPG')); % Assuming JPEG format for the images TODO: add support for other formats
 
     numImages = numel(imageFiles);
@@ -20,6 +22,8 @@ end
 
 % Load the camera parameters
 cameraParams = logic.reconstruct3D.loadCameraParams('test/delivery_area_dslr_undistorted/cameras.txt');
+% cameraParams = logic.reconstruct3D.loadCameraParams('test/old_computer/cameras.txt');
+
 % Reconstruct3d multiview
 fprintf('\n Reconstructing 3D...\n')
 [pointCloudInstance, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams);

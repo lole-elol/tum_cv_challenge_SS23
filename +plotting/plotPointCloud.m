@@ -34,7 +34,7 @@ function plotPointCloud(pointCloudInstance, camPoses, varargin)
                 camPose = camPoses(pose);
             end
             plotCamera(Location=camPose.Translation, Orientation=camPose.R, ...
-                Size=cameraSizePlotSize, Color='b', Opacity=0);
+                Size=cameraSizePlotSize, Color='b', Opacity=0, label=string(pose));
         end
         xlabel('X');
         ylabel('Y');

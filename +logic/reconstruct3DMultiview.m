@@ -76,7 +76,7 @@ for i = 2:numImages
         size(relPose)
         relPose = relPose(1);
     end
-    currPose = rigidtform3d(prevPose.A*relPose.A); 
+    currPose = rigidtform3d(prevPose.A * relPose.A); % TODO: the cameras are pointing in the wrong direction.
     
     % Add the current view to the view set.
     vSet = addView(vSet, i, currPose, Points=currPoints);
