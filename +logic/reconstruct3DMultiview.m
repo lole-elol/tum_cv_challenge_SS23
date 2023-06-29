@@ -3,6 +3,8 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 % Input:
 %   images - a cell array of images
 %   cameraParams - a cameraParameters object
+%   log - a boolean indicating whether to log the progress
+%   scalingFactor - a factor by which the images are scaled down
 % Output:
 %   pointCloudInstance - a pointCloud object
 %   camPoses - a table containing the camera poses
@@ -10,8 +12,10 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 
 p = inputParser;
 p.addOptional('log', true);
+p.addOptional('scalingFactor', 0.5);
 p.parse(varargin{:});
 log = p.Results.log;
+scalingFactor = p.Results.scalingFactor;
 
 numImages = length(images);
 
@@ -23,12 +27,15 @@ for i = 1:numImages
     if log
         fprintf('Analyzing image %d of %d\r', i, numImages);
     end
-    % TODO: resampling leads to shear reconstruction results. Cam parameters need to be adjusted (if that works)
-    images{i} = imresize(images{i}, 1.0);
+    images{i} = imresize(images{i}, scalingFactor);
     % TODO: for now we only use the grayscale image, but we should use the output of the preprocessImage function
     % [~, images{i}, ~] = logic.reconstruct3D.preprocessImage(images{i});
     images{i} = im2gray(images{i});
 end 
+% Modify camera parameters to compensate for image resizing
+cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
+
+
 % =========================
 if log
     fprintf('\nPreprocessing finished.\n');
