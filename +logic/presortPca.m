@@ -1,5 +1,5 @@
 
-function [images, index] = presortPca(inPath)
+function [images, index, features] = presortPca(inPath)
 % PRESORTPCA  Sorts images by PCA via projection to a 1D space.
 %
 % Inputs:
@@ -8,6 +8,7 @@ function [images, index] = presortPca(inPath)
 % Outputs:
 %   images:  Cell array of images
 %   index:   Index of sorted images
+%   features: features of images
 
 % inPath = "test/delivery_area_dslr_undistorted/images";
 
@@ -31,6 +32,8 @@ X = im2double(cell2mat(images_flat)');
 [coeff,score,latent,tsquared,explained,mu] = pca(X );
 Y = X*coeff(:, 1);
 [value, index] = sort(Y);
+
+features = Y;
 
 end
 

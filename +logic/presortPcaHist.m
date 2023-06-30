@@ -1,8 +1,4 @@
-
-
-
-
-function [images, index] = presortPcaHist(inPath)
+function [images, index, features] = presortPcaHist(inPath)
 % PRESORTPCAHIST Sort images via the PCA of their histograms.
 %  Project the feature space to 1D and sort the images according to the
 %
@@ -11,6 +7,7 @@ function [images, index] = presortPcaHist(inPath)
 % Outputs:
 %   images: cell array of images
 %   index: sorted index of images
+%   features: feature vector of images
 
 % inPath = "test/delivery_area_dslr_undistorted/images";
 
@@ -34,6 +31,8 @@ X = cell2mat(image_hist_norm)';
 [coeff,score,latent,tsquared,explained,mu] = pca(X );
 Y = X*coeff(:, 1);
 [value, index] = sort(Y);
+
+features = Y;
 
 
 end

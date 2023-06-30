@@ -1,4 +1,4 @@
-function [images, index] = presortPcaFFT2(inPath)
+function [images, index, features] = presortPcaFFT2(inPath)
 % PRESORTPCAFFT2 - Sorts images by PCA on FFT2
 %
 % Inputs:
@@ -6,6 +6,7 @@ function [images, index] = presortPcaFFT2(inPath)
 % Outputs:
 %   images: cell array of images
 %   index: sorted index of images
+%   features: features of images
 
 % inPath = "test/delivery_area_dslr_undistorted/images";
 
@@ -22,7 +23,7 @@ end
 
 fft_images = cellfun(@(x) fft2(x), images, 'UniformOutput', false);
 fft_images_shiffted= cellfun(@(x) fftshift(x), fft_images, 'UniformOutput', false);
-fft_images_log = cellfun(@(x) log(1+abs(x)), fft_images_shiffted, 'UniformOutput', false);
+fft_images_log = cellfun(@(x) log(1e-6+abs(x)), fft_images_shiffted, 'UniformOutput', false);
 % flatten fft images
 fft_images_flatt = cellfun(@(x) x(:), fft_images_log, 'UniformOutput', false);
 %normalize fft images
@@ -32,6 +33,8 @@ X = cell2mat(fft_images_norm)';
 [coeff,score,latent,tsquared,explained,mu] = pca(X );
 Y = X*coeff(:, 1);
 [value, index] = sort(Y);
+
+features = Y;
 
 end
 
