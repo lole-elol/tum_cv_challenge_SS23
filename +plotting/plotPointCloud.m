@@ -26,10 +26,14 @@ function plotPointCloud(pointCloudInstance, camPoses, varargin)
     else
         pcshow(pointCloudInstance, VerticalAxis='Y', VerticalAxisDir='Down', MarkerSize=pcMarkerSize);
         % Show cameras poses
-        for pose=1:numel(camPoses)
+        if istable(camPoses)
+            camPoses = camPoses(:, 2).AbsolutePose;
+        end
+        for pose=1:length(camPoses)
             % Plot camera
-            plotCamera(Location=camPoses(pose).Translation, Orientation=camPoses(pose).R, ...
-                Size=cameraSizePlotSize, Color='b', Opacity=0);
+            camPose = camPoses(pose);
+            plotCamera(Location=camPose.Translation, Orientation=camPose.R, ...
+                Size=cameraSizePlotSize, Color='b', Opacity=0, label=string(pose));
         end
         xlabel('X');
         ylabel('Y');

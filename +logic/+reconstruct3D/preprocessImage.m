@@ -32,7 +32,7 @@ gaussCannyCombineFilterSize = p.Results.gaussCannyCombineFilterSize;
 % Apply a canny detector to the images to get the edges of the objects in the images
 % pre filter image with gaussian filter to remove noise and improve canny results
 % Merge canny edges and original image with a gaussian filter
-imageGray = rgb2gray(image);
+imageGray = im2gray(image);
 imageBlured = imgaussfilt(imageGray, cannyGaussianFilterSize);
 imageCanny = edge(imageBlured, 'Canny', cannyThreshold);
 % TODO: Dont simply add them but maybe make first gray image darker.
