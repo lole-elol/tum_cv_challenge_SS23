@@ -78,7 +78,7 @@ if testReconstruction
     testPCs = cell(numCombinations, 1);  % PC that will be passed to the detection benchmarking
     for i=1:numCombinations
         paramsTable = reconstructionParams(i, :);
-        disp('Running parameter combination ' + string(i));
+        disp('Running parameter combination ' + string(i) + ' of ' + string(numCombinations));
         fprintf('\n')
         disp(paramsTable)
         fprintf('\n')
@@ -143,7 +143,7 @@ if testDetection
     for i=1:size(detectionParams, 1)
         paramsTable = detectionParams(i, :);
 
-        disp('Running parameter combination ' + string(i));
+        disp('Running parameter combination ' + string(i) + ' of ' + string(numCombinations));
         fprintf('\n')
         disp(paramsTable)
         fprintf('\n')

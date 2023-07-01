@@ -18,7 +18,32 @@ disp('Displaying Benchmark Results!')
 
 if showReconstruction
     disp('Displaying 3D Reconstruction Results!')
-    disp("! NOT IMPLEMENTED YET !")
+    disp("Loading Benchmark Results...")
+    load(fullfile(dataPath, 'reconstructionParams.mat'), 'reconstructionParams');
+    load(fullfile(dataPath, 'reconstructionOut.mat'), 'outData');
+    fprintf('\n')
+
+    numCombinations = size(reconstructionParams, 1);
+    for i=1:numCombinations
+        params = reconstructionParams(i, :);
+
+        fprintf('Parameter combination %d:\n', i)
+        disp(params)
+        fprintf('\n')
+
+        figure('name', 'Results for parameter combination ' + string(i));
+
+        for j=1:size(outData, 2)
+            subplot(ceil(size(outData, 2)/2), 2, j)
+            title('Point Cloud ' + string(j))
+            results = outData{i, j};
+            pointCloudInstance = results{1};
+            disp("Point Cloud " + string(j) + " has " + string(pointCloudInstance.Count) + " points.")
+            camPoses = results{2};
+            plotting.plotPointCloud(pointCloudInstance, camPoses)
+        end
+        input('Press any key to continue...')
+    end
 end
 
 if showDetection
@@ -31,20 +56,8 @@ if showDetection
     for i=1:size(detectionParams, 1)
         params = detectionParams(i, :);
 
-        disp('Results for parameter combination ' + string(i));
-        disp('----------------------------------------');
-        disp('outlierDist: ' + string(params.outlierDist));
-        disp('clusterDist: ' + string(params.clusterDist));
-        disp('clusterPercentile: ' + string(params.clusterPercentile));
-        disp('clusterDenoise: ' + string(params.clusterDenoise));
-        disp('clusterDenoiseNeighbours: ' + string(params.clusterDenoiseNeighbours));
-        disp('ceilingPercentile: ' + string(params.ceilingPercentile));
-        disp('ceilingDist: ' + string(params.ceilingDist));
-        disp('ceilingWindowSize: ' + string(params.ceilingWindowSize));
-        disp('cuboidVolume: ' + string(params.cuboidVolume));
-        disp('cuboidInlier: ' + string(params.cuboidInlier));
-        disp('cuboidOverlap: ' + string(params.cuboidOverlap));
-        disp('----------------------------------------')
+        fprintf('Parameter combination %d:\n', i)
+        disp(params)
         fprintf('\n')
 
         figure('name', 'Results for parameter combination ' + string(i));
@@ -54,7 +67,7 @@ if showDetection
             models = results{1};
 
             subplot(ceil(size(outData, 2)/2), 2, j)
-            title('Demo ' + string(j))
+            title('Point Cloud ' + string(j))
             % Plot the point cloud
             pcshow(results{2})
             hold on

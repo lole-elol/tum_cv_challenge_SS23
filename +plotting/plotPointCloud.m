@@ -18,7 +18,6 @@ function plotPointCloud(pointCloudInstance, camPoses, varargin)
     cameraSizePlotSize = p.Results.cameraSizePlotSize;
     pcMarkerSize = p.Results.pcMarkerSize;
 
-    figure;
     hold on;
 
     if usePcViewer
@@ -41,4 +40,3 @@ function plotPointCloud(pointCloudInstance, camPoses, varargin)
     end
     % Rotate and zoom the plot
     camorbit(0, -30);
-    hold off;
