@@ -5,17 +5,47 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 %   cameraParams - a cameraParameters object
 %   log - a boolean indicating whether to log the progress
 %   scalingFactor - a factor by which the images are scaled down
+%   numOctaves - the number of octaves used for feature extraction
+%   roiBorder - the border around the image that is ignored for feature extraction
+%   eMaxDistance - the maximum distance from an epipolar line for a point to be considered an inlier
+%   eConfidence - the confidence level for the epipolar geometry
+%   eMaxNumTrials - the maximum number of trials for the epipolar geometry
+%   eValidPointFraction - the minimum fraction of points that must be in front of both cameras for the epipolar geometry to be valid
+%   maxReprojectionError - the maximum reprojection error for a point to be considered valid
 % Output:
 %   pointCloudInstance - a pointCloud object
 %   camPoses - a table containing the camera poses
 %   tracks - a table containing the point tracks
 
+%% === 0. Parse input ===
 p = inputParser;
 p.addOptional('log', true);
+%% Preprocessing Params
 p.addOptional('scalingFactor', 0.5);
+%% Reconstruction Params
+% Feature extraction parameters
+p.addOptional('numOctaves', 20);
+p.addOptional('roiBorder', 20);
+% Epipolar geometry parameters
+p.addOptional('eMaxDistance', 5);
+p.addOptional('eConfidence', 99.6);
+p.addOptional('eMaxNumTrials', 100000);
+p.addOptional('eValidPointFraction', 0.8);
+% Triangulation parameters
+p.addOptional('maxReprojectionError', 20);
+
 p.parse(varargin{:});
 log = p.Results.log;
 scalingFactor = p.Results.scalingFactor;
+numOctaves = p.Results.numOctaves;
+roiBorder = p.Results.roiBorder;
+eMaxDistance = p.Results.eMaxDistance;
+eConfidence = p.Results.eConfidence;
+eMaxNumTrials = p.Results.eMaxNumTrials;
+eValidPointFraction = p.Results.eValidPointFraction;
+maxReprojectionError = p.Results.maxReprojectionError;
+% =========================
+
 
 numImages = length(images);
 
@@ -35,11 +65,10 @@ end
 % Modify camera parameters to compensate for image resizing
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
 
-
-% =========================
 if log
     fprintf('\nPreprocessing finished.\n');
 end
+% =========================
 
 %% === 2. Feature Extraction First Image ===
 image1 = images{1};
@@ -49,7 +78,7 @@ if log
     tic;
     fprintf("Generating view set and finding features of first picture\n");
 end
-[vSet, prevFeatures, prevPoints] = logic.reconstruct3D.createViewSet(image1);
+[vSet, prevFeatures, prevPoints] = logic.reconstruct3D.createViewSet(image1, numOctaves=numOctaves, roiBorder=roiBorder);
 
 % === 3. Feature Extraction and matching remaining Images ===
 for i = 2:numImages
@@ -59,13 +88,15 @@ for i = 2:numImages
     % Load the current image and extract common features to all previous views.
     currentImage = images{i};
 
-    [matchedPoints1, matchedPoints2, currPoints, currFeatures, indexPairs] = logic.reconstruct3D.extractCommonFeaturesMultiView(currentImage, prevFeatures, prevPoints);
+    [matchedPoints1, matchedPoints2, currPoints, currFeatures, indexPairs] = logic.reconstruct3D.extractCommonFeaturesMultiView(currentImage, prevFeatures, prevPoints, ...
+                                                                                                                                numOctaves=numOctaves, roiBorder=roiBorder);
     
     % Estimate the camera pose of current view relative to the previous view.
     % The pose is computed up to scale, meaning that the distance between
     % the cameras in the previous view and the current view is set to 1.
     % This will be corrected by the bundle adjustment.
-    [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPoints1, matchedPoints2, cameraParams);
+    [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPoints1, matchedPoints2, cameraParams, ...
+                                                                              eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
     
     % Get the table containing the previous camera pose.
     prevPose = poses(vSet, i-1).AbsolutePose;
@@ -82,7 +113,7 @@ for i = 2:numImages
     vSet = addView(vSet, i, currPose, Points=currPoints);
 
     % Store the point matches between the previous and the current views.
-    vSet = addConnection(vSet, i-1, i, relPose, Matches=indexPairs(inlierIdx,:));
+    vSet = addConnection(vSet, i-1, i, relPose, Matches=indexPairs(inlierIdx, :));
     
     % Find point tracks across all views.
     tracks = findTracks(vSet);
@@ -90,7 +121,8 @@ for i = 2:numImages
     % Get the table containing camera poses for all views.
     camPoses = poses(vSet);
 
-    [pointCloudInstance, camPoses] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams);
+    [pointCloudInstance, camPoses] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
+                                                                                        maxReprojectionError=maxReprojectionError);
 
     % Store the refined camera poses.
     vSet = updateView(vSet, camPoses);
@@ -98,6 +130,8 @@ for i = 2:numImages
     prevFeatures = currFeatures;
     prevPoints = currPoints;  
 end
+% TODO: Add an extra step to generate more features once we get the full 3D reconstruction
+
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
 end
