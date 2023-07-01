@@ -2,16 +2,18 @@ function run(configPath, inPath, outPath, varargin)
 % BENCHMARK - Run 3D Reconstruction and 3D Model Detection benchmarks with different parameters
 %
 % Inputs:
-%   configPath: Path to the configuration file
+%   configPath: Path(s) to the configuration file
 %   outPath: Path to the output folder
-%   inPath: Path to the input folder (Includes images or point clouds depending on the benchmark)
+%   inPath: Path(s) to the input folder(s) (Includes images or point clouds depending on the benchmark)
 %   testReconstruction = true: If true, run the 3D Reconstruction benchmark
 %   testDetection = true: If true, run the 3D Model Detection benchmark
 
+isArrayOrString = @(x) isstring(x) || iscell(x);
+
 p = inputParser;
-p.addRequired("configPath", @isstring)
-p.addRequired("inPath", @isstring)
-p.addRequired("outPath", @isstring)
+p.addRequired("configPath", isArrayOrString)
+p.addRequired("inPath", isArrayOrString)
+p.addRequired("outPath", isArrayOrString)
 p.addParameter('testReconstruction', true, @islogical);
 p.addParameter('testDetection', true, @islogical);
 
@@ -21,18 +23,26 @@ testReconstruction = p.Results.testReconstruction;
 testDetection = p.Results.testDetection;
 
 disp('Running Benchmark!')
-disp('Loading configuration .mat file');
-load(configPath);
+disp('Loading configurations .mat file');
+% Load configuration(s) from .mat files
+if iscell(configPath)
+    for i = 1:length(configPath)
+        load(configPath{i});
+    end
+else
+    load(configPath);
+end
 
 if testReconstruction
     disp('Running 3D Reconstruction benchmark');
-    
-    % TODO: Load input data from parameter
-    paths = ["test/old_computer", "test/delivery_area_dslr_undistorted"];
-    scenes = cell(length(paths), 1);
-    for i = 1:length(paths)
-        path = paths(i);
-        images = util.loadImages(path + '/images', numImages=5);  % TODO: load all images
+    % Load input data
+    scenes = cell(length(inPath), 1);
+    if ~iscell(inPath)
+        inPath = {inPath};
+    end
+    for i = 1:length(inPath)
+        path = inPath{i};
+        images = util.loadImages(path + '/images', numImages=3);  % TODO: load all images
         cameraParams = logic.reconstruct3D.loadCameraParams(path + '/cameras.txt');
         scenes{i} = {images, cameraParams};
         fprintf("\n");
@@ -41,13 +51,17 @@ if testReconstruction
 
     % Prepare all the combinations of parameters
     fields = fieldnames(reconstruction);
+    numParams = numel(fields);
+
     combinationsArgs = cell(1, numel(fields));
     for i = 1:numel(fields)
         combinationsArgs{i} = reconstruction.(fields{i});
     end
+
     reconstructionParams = combinations(combinationsArgs{:});  % Table containing all combinations
     reconstructionParams.Properties.VariableNames = fields;
     numCombinations = size(reconstructionParams, 1);
+
     % Save parameter combinations
     outputMat = append(outPath, '/reconstructionParams.mat');
     save(outputMat, 'reconstructionParams');
@@ -68,7 +82,9 @@ if testReconstruction
         fprintf('\n')
         disp(paramsTable)
         fprintf('\n')
-        params = table2cell(paramsTable);
+
+        params = util.getParamsFromTable(paramsTable);
+
         for j = 1:numScenes
             scene = scenes{j};
             images = scene{1};
@@ -132,7 +148,7 @@ if testDetection
         disp(paramsTable)
         fprintf('\n')
 
-        params = table2cell(paramsTable);
+        params = util.getParamsFromTable(paramsTable);
 
         for j=1:numTestPCs
             pc = testPCs{j};

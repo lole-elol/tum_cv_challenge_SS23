@@ -17,4 +17,6 @@ reconstruction = struct(...
 %% Save to file
 save(outPath, 'reconstruction')
 
-% benchmark.run("+benchmark/configs/benchmarkReconstructionV1.mat")
+% %% Run benchmark
+% benchmark.run("+benchmark/configs/benchmarkReconstructionV1.mat", {"test/old_computer", "test/delivery_area_dslr_undistorted"}, "+benchmark/outputData", testDetection=false, testReconstruction=true)
+% benchmark.run({"+benchmark/configs/benchmarkReconstructionV1.mat", "+benchmark/configs/benchmarkCuboids.mat"}, {"test/old_computer", "test/delivery_area_dslr_undistorted"}, "+benchmark/outputData", testDetection=true, testReconstruction=true)
