@@ -61,6 +61,7 @@ if testReconstruction
     % Run the benchmark by running the reconstruction algorithm with each
     % parameter combination and each scene. Save the output data.
     outData = cell(numCombinations, numScenes);  
+    testPCs = cell(numCombinations, 1);  % PC that will be passed to the detection benchmarking
     for i=1:numCombinations
         paramsTable = reconstructionParams(i, :);
         disp('Running parameter combination ' + string(i));
@@ -74,9 +75,9 @@ if testReconstruction
             cameraParams = scene{2};
             disp('Running scene ' + string(j) + ' of ' + string(numScenes));
             tic
-            [pointCloudInstance, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams, params{:});
+            [testPCs{i}, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams, params{:});
             t = toc;
-            outData{i, j} = {pointCloudInstance, camPoses, tracks};
+            outData{i, j} = {testPCs{i}, camPoses, tracks, t};
             disp('Time: ' + string(t) + 's');
         end
     end
@@ -102,63 +103,49 @@ if testDetection
             testPCs{i} = logic.pointcloud.loadData(append(inPath, '/', el.name));
         end
     end
-
-    % Generate all possible parameter combinations
-    outlierDist = detection.outlierDist;
-    clusterDist = detection.clusterDist;
-    clusterPercentile = detection.clusterPercentile;
-    clusterDenoise = detection.clusterDenoise;
-    clusterDenoiseNeighbours = detection.clusterDenoiseNeighbours;
-    ceilingPercentile = detection.ceilingPercentile;
-    ceilingDist = detection.ceilingDist;
-    ceilingWindowSize = detection.ceilingWindowSize;
-    cuboidVolume = detection.cuboidVolume;
-    cuboidInlier = detection.cuboidInlier;
-    cuboidOverlap = detection.cuboidOverlap;
-
-    detectionParams = combinations(outlierDist, clusterDist, clusterPercentile, clusterDenoise, clusterDenoiseNeighbours, ceilingPercentile, ceilingDist, ceilingWindowSize, cuboidVolume, cuboidInlier, cuboidOverlap);
-
+    numTestPCs = size(testPCs, 1);
+    % Prepare all the combinations of parameters
+    detectionFields = fieldnames(detection);
+    combinationsArgs = cell(1, numel(detectionFields));
+    for i = 1:numel(detectionFields)
+        combinationsArgs{i} = detection.(detectionFields{i});
+    end
+    detectionParams = combinations(combinationsArgs{:});  % Table containing all combinations
+    detectionParams.Properties.VariableNames = detectionFields;
+    numCombinations = size(detectionParams, 1);
     % Save parameter combinations
-    save(append(outPath, '/detectionParams.mat'), 'detectionParams');
+    outputMat = append(outPath, '/detectionParams.mat');
+    save(outputMat, 'detectionParams');
 
-    disp('Found ' + string(size(detectionParams, 1)) + ' parameter combinations');
+    disp('Found ' + string(numCombinations) + ' parameter combinations:');
+    disp(detectionParams)
     input('Press enter to continue ...');
     disp('Running benchmark ...');
     fprintf('\n')
 
-    outData = cell(size(detectionParams, 1), size(testPCs, 1));
+    outData = cell(numCombinations, numTestPCs);
     for i=1:size(detectionParams, 1)
-        params = detectionParams(i, :);
+        paramsTable = detectionParams(i, :);
 
         disp('Running parameter combination ' + string(i));
-        disp('----------------------------------------');
-        disp('outlierDist: ' + string(params.outlierDist));
-        disp('clusterDist: ' + string(params.clusterDist));
-        disp('clusterPercentile: ' + string(params.clusterPercentile));
-        disp('clusterDenoise: ' + string(params.clusterDenoise));
-        disp('clusterDenoiseNeighbours: ' + string(params.clusterDenoiseNeighbours));
-        disp('ceilingPercentile: ' + string(params.ceilingPercentile));
-        disp('ceilingDist: ' + string(params.ceilingDist));
-        disp('ceilingWindowSize: ' + string(params.ceilingWindowSize));
-        disp('cuboidVolume: ' + string(params.cuboidVolume));
-        disp('cuboidInlier: ' + string(params.cuboidInlier));
-        disp('cuboidOverlap: ' + string(params.cuboidOverlap));
-        disp('----------------------------------------')
+        fprintf('\n')
+        disp(paramsTable)
         fprintf('\n')
 
-        for j=1:length(testPCs)
+        params = table2cell(paramsTable);
+
+        for j=1:numTestPCs
             pc = testPCs{j};
-            disp('Running point cloud ' + string(j) + ' of ' + string(size(testPCs, 1)));
+            disp('Running point cloud ' + string(j) + ' of ' + string(numTestPCs));
 
             tic
-            [models, pcFilter, pcRemaining] = logic.modelDetection(pc, outlierDist=params.outlierDist, clusterDist=params.clusterDist, clusterPercentile=params.clusterPercentile, clusterDenoise=params.clusterDenoise, clusterDenoiseNeighbours=params.clusterDenoiseNeighbours, ceilingPercentile=params.ceilingPercentile, ceilingDist=params.ceilingDist, ceilingWindowSize=params.ceilingWindowSize, cuboidVolume=params.cuboidVolume, cuboidInlier=params.cuboidInlier, cuboidOverlap=params.cuboidOverlap);
+            [models, pcFilter, pcRemaining] = logic.modelDetection(pc, params{:});
             t = toc;
 
             outData{i, j} = {models, pcFilter, pcRemaining, t};
 
             disp('Time: ' + string(t) + 's');
         end
-
         fprintf('\n')
     end
 
