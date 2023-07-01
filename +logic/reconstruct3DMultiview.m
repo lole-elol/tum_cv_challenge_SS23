@@ -61,7 +61,7 @@ for i = 1:numImages
     % TODO: for now we only use the grayscale image, but we should use the output of the preprocessImage function
     % [~, images{i}, ~] = logic.reconstruct3D.preprocessImage(images{i});
     images{i} = im2gray(images{i});
-end 
+end
 % Modify camera parameters to compensate for image resizing
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
 
@@ -90,31 +90,31 @@ for i = 2:numImages
 
     [matchedPoints1, matchedPoints2, currPoints, currFeatures, indexPairs] = logic.reconstruct3D.extractCommonFeaturesMultiView(currentImage, prevFeatures, prevPoints, ...
                                                                                                                                 numOctaves=numOctaves, roiBorder=roiBorder);
-    
+
     % Estimate the camera pose of current view relative to the previous view.
     % The pose is computed up to scale, meaning that the distance between
     % the cameras in the previous view and the current view is set to 1.
     % This will be corrected by the bundle adjustment.
     [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPoints1, matchedPoints2, cameraParams, ...
                                                                               eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
-    
+
     % Get the table containing the previous camera pose.
     prevPose = poses(vSet, i-1).AbsolutePose;
-        
-    % Compute the current camera pose in the global coordinate system 
+
+    % Compute the current camera pose in the global coordinate system
     % relative to the first view.
     if length(relPose) > 1  % TODO: BUG sometimes two poses are returned. This is a workaround
         size(relPose)
         relPose = relPose(1);
     end
     currPose = rigidtform3d(prevPose.A * relPose.A); % TODO: the cameras are pointing in the wrong direction.
-    
+
     % Add the current view to the view set.
     vSet = addView(vSet, i, currPose, Points=currPoints);
 
     % Store the point matches between the previous and the current views.
     vSet = addConnection(vSet, i-1, i, relPose, Matches=indexPairs(inlierIdx, :));
-    
+
     % Find point tracks across all views.
     tracks = findTracks(vSet);
 
@@ -128,8 +128,20 @@ for i = 2:numImages
     vSet = updateView(vSet, camPoses);
 
     prevFeatures = currFeatures;
-    prevPoints = currPoints;  
+    prevPoints = currPoints;
+
 end
+
+% Rotate the point cloud
+R = [1 0 0; 0 0 1; 0 -1 0];
+tform = rigid3d(R, [0 0 0]);
+pointCloudInstance = pctransform(pointCloudInstance, tform);
+
+%for cam=camPoses.AbsolutePose'
+    %cam.R = R * cam.R;
+    %cam.Translation = (R * cam.Translation')';
+%end
+
 % TODO: Add an extra step to generate more features once we get the full 3D reconstruction
 
 if log
