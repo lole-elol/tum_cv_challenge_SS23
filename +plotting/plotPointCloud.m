@@ -22,9 +22,9 @@ function plotPointCloud(pointCloudInstance, camPoses, varargin)
     hold on;
 
     if usePcViewer
-        pcviewer(pointCloudInstance,VerticalAxis='YDown', PointSize=1);
+        pcviewer(pointCloudInstance, PointSize=1);
     else
-        pcshow(pointCloudInstance, VerticalAxis='Y', VerticalAxisDir='Down', MarkerSize=pcMarkerSize);
+        pcshow(pointCloudInstance, VerticalAxisDir='Down', MarkerSize=pcMarkerSize);
         % Show cameras poses
         plotCamera(camPoses);
         xlabel('X');
