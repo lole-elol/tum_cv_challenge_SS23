@@ -13,7 +13,7 @@ function [pointCloudInstance, camPoses] = getTriangulatedPointsMultiView(tracks,
 
     % Remove points with negative z coordinate and points that are too far away from the camera as they are probably outliers
     % remove points with high reprojection error
-    valid_index = valid_index & (worldPoints(:, 3) > 0) & (reprojectionErrors < maxReprojectionError);
+    valid_index = valid_index & (reprojectionErrors < maxReprojectionError);
     worldPoints = worldPoints(valid_index, :);
     
     % TODO: color the points based on the image

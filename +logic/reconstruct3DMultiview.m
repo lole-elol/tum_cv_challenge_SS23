@@ -107,7 +107,7 @@ for i = 2:numImages
         size(relPose)
         relPose = relPose(1);
     end
-    currPose = rigidtform3d(prevPose.A * relPose.A); % TODO: the cameras are pointing in the wrong direction.
+    currPose = rigidtform3d(prevPose.A * relPose.A); 
 
     % Add the current view to the view set.
     vSet = addView(vSet, i, currPose, Points=currPoints);
@@ -134,13 +134,12 @@ end
 
 % Rotate the point cloud
 R = [1 0 0; 0 0 1; 0 -1 0];
-tform = rigid3d(R, [0 0 0]);
+tform = rigidtform3d(R, [0 0 0]);
 pointCloudInstance = pctransform(pointCloudInstance, tform);
-
-%for cam=camPoses.AbsolutePose'
-    %cam.R = R * cam.R;
-    %cam.Translation = (R * cam.Translation')';
-%end
+% Transform the camera poses to the new coordinate system
+for i = 1:numImages
+    camPoses.AbsolutePose(i) = rigidtform3d(tform.A * camPoses.AbsolutePose(i).A);
+end    
 
 % TODO: Add an extra step to generate more features once we get the full 3D reconstruction
 

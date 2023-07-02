@@ -5,7 +5,7 @@
 dataDir = "test/delivery_area_dslr_undistorted";
 
 if exist('images','var') == 0  % Load the images if they are not already loaded yet
-    images = util.loadImages(dataDir + "/images", log=true, numImages=10);
+    images = util.loadImages(dataDir + "/images", log=true, numImages=15);
 end
 
 % Load the camera parameters
