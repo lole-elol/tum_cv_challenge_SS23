@@ -1,26 +1,34 @@
-function [images, index, features] = presortPcaHist(inPath)
-% PRESORTPCAHIST Sort images via the PCA of their histograms.
+function [images, index, features] = presortPcaHist(images, varargin)
+% PRESORTPCAHIST Sort images via the PCA of their histograms. - DEPRECATED
 %  Project the feature space to 1D and sort the images according to the
 %
 % Inputs:
-%   inPath path to the folder containing the images
+%   images:  Cell array of images
+%   featureLength = 1: Length of feature vector
+%
 % Outputs:
-%   images: cell array of images
-%   index: sorted index of images
-%   features: feature vector of images
+%   images:  Sorted images
+%   index:   Index of sorted images
+%   features: features of images
 
 % inPath = "test/delivery_area_dslr_undistorted/images";
 
-imagefiles = dir(append(inPath, '/*.jpg'));
+p = inputParser;
+p.addOptional('featureLength', 1);
 
-nfiles = length(imagefiles);    % Number of files found
+p.parse(varargin{:});
+featureLength = p.Results.featureLength;
 
-images = cell(1, nfiles);
-for ii=1:nfiles
-    currentfilename = append(inPath, '/', imagefiles(ii).name);
-    currentimage = rgb2gray(imresize(imread(currentfilename),0.5));
-    images{ii} = currentimage;
-end
+%imagefiles = dir(append(inPath, '/*.jpg'));
+%
+%nfiles = length(imagefiles);    % Number of files found
+%
+%images = cell(1, nfiles);
+%for ii=1:nfiles
+%    currentfilename = append(inPath, '/', imagefiles(ii).name);
+%    currentimage = rgb2gray(imresize(imread(currentfilename),0.07));
+%    images{ii} = currentimage;
+%end
 
 % histograms of images in the dataset
 image_hist = cellfun(@(x) imhist(x), images, 'UniformOutput', false);

@@ -1,25 +1,33 @@
-function [images, index, features] = presortPcaFFT2(inPath)
-% PRESORTPCAFFT2 - Sorts images by PCA on FFT2
+function [images, index, features] = presortPcaFFT2(images, varargin)
+% PRESORTPCAFFT2 - Sorts images by PCA on FFT2 - DEPRECATED
 %
 % Inputs:
-%   inPath path to folder with images
+%   images:  Cell array of images
+%   featureLength = 1: Length of feature vector
+%
 % Outputs:
-%   images: cell array of images
-%   index: sorted index of images
+%   images:  Sorted images
+%   index:   Index of sorted images
 %   features: features of images
 
 % inPath = "test/delivery_area_dslr_undistorted/images";
 
-imagefiles = dir(append(inPath, '/*.jpg'));
+p = inputParser;
+p.addOptional('featureLength', 1);
 
-nfiles = length(imagefiles);    % Number of files found
+p.parse(varargin{:});
+featureLength = p.Results.featureLength;
 
-images = cell(1, nfiles);
-for ii=1:nfiles
-    currentfilename = append(inPath, '/', imagefiles(ii).name);
-    currentimage = rgb2gray(imresize(imread(currentfilename),0.07));
-    images{ii} = currentimage;
-end
+%imagefiles = dir(append(inPath, '/*.jpg'));
+%
+%nfiles = length(imagefiles);    % Number of files found
+%
+%images = cell(1, nfiles);
+%for ii=1:nfiles
+%    currentfilename = append(inPath, '/', imagefiles(ii).name);
+%    currentimage = rgb2gray(imresize(imread(currentfilename),0.07));
+%    images{ii} = currentimage;
+%end
 
 fft_images = cellfun(@(x) fft2(x), images, 'UniformOutput', false);
 fft_images_shiffted= cellfun(@(x) fftshift(x), fft_images, 'UniformOutput', false);
