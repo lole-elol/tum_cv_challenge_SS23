@@ -21,7 +21,7 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 p = inputParser;
 p.addOptional('log', true);
 %% Preprocessing Params
-p.addOptional('scalingFactor', 0.5);
+p.addOptional('scalingFactor', 1);
 %% Reconstruction Params
 % Feature extraction parameters
 p.addOptional('numOctaves', 20);
@@ -133,13 +133,7 @@ for i = 2:numImages
 end
 
 % Rotate the point cloud
-R = [1 0 0; 0 0 1; 0 -1 0];
-tform = rigidtform3d(R, [0 0 0]);
-pointCloudInstance = pctransform(pointCloudInstance, tform);
-% Transform the camera poses to the new coordinate system
-for i = 1:numImages
-    camPoses.AbsolutePose(i) = rigidtform3d(tform.A * camPoses.AbsolutePose(i).A);
-end    
+[pointCloudInstance, camPoses] = logic.reconstruct3D.rotateScene(pointCloudInstance, camPoses, [1 0 0; 0 0 1; 0 -1 0]);
 
 % TODO: Add an extra step to generate more features once we get the full 3D reconstruction
 
