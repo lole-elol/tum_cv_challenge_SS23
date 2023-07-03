@@ -28,9 +28,7 @@ for i = 1:numImages
         fprintf('Analyzing image %d of %d\r', i, numImages);
     end
     images{i} = imresize(images{i}, scalingFactor);
-    % TODO: for now we only use the grayscale image, but we should use the output of the preprocessImage function
-    % [~, images{i}, ~] = logic.reconstruct3D.preprocessImage(images{i});
-    images{i} = im2gray(images{i});
+    images{i} = logic.reconstruct3D.preprocessImage(images{i});
 end 
 % Modify camera parameters to compensate for image resizing
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
