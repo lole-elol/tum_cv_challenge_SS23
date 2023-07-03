@@ -1,13 +1,22 @@
 function [vSet, prevFeatures, prevPoints] = createViewSet(image1, varargin)
 % CREATEVIEWSET Create a viewSet object containing the first view.
+% Inputs:
+%   image1 - first image
+%   numOctaves - number of octaves for SURF feature detection
+%   roiBorder - border around the image to exclude from feature detection
+% Outputs:
+%   vSet - viewSet object containing the first view
+%   prevFeatures - SURF features of the first image
+%   prevPoints - SURF points of the first image
+
 p = inputParser;
 p.addOptional('numOctaves', 20);
-p.addOptional('roi_border', 20);
+p.addOptional('roiBorder', 20);
 p.parse(varargin{:});
 numOctaves = p.Results.numOctaves;
-roi_border = p.Results.roi_border;
+roiBorder = p.Results.roiBorder;
 
-roi = [roi_border, roi_border, size(image1, 2)- 2*roi_border, size(image1, 1)- 2*roi_border];
+roi = [roiBorder, roiBorder, size(image1, 2)- 2*roiBorder, size(image1, 1)- 2*roiBorder];
 prevPoints = detectSURFFeatures(image1, NumOctaves=numOctaves, ROI=roi);
 prevFeatures = extractFeatures(image1, prevPoints);
 
