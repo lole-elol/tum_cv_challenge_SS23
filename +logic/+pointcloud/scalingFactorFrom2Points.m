@@ -1,4 +1,4 @@
-function [scalingFactor, worldPoints] = scalingFactorFrom2Points(points, distance, camPose1, camPose2, cameraIntrinsics)
+function [scalingFactor, worldPoints] = scalingFactorFrom2Points(points, camPoses, camParams, distance)
 % SCALINGFACTORFROM2POINTS  Calculate the scaling factor from 2 points in
 % 2 different perspectives (4 points in total), given the distance between the points in the real
 % world.
@@ -15,10 +15,8 @@ function [scalingFactor, worldPoints] = scalingFactorFrom2Points(points, distanc
 %   scalingFactor: the scaling factor between the images
 %   worldPoints: the 3D coordinates of the 2 points in the real world
 
-camMatrix1 = cameraProjection(cameraIntrinsics, camPose1);
-camMatrix2 = cameraProjection(cameraIntrinsics, camPose2);
-[worldPoints, reprojectionError, validIndex] = triangulate(points{1}, points{2}, camMatrix1, camMatrix2);
-
+tracks = [ pointTrack([1, 2], points{1}),  pointTrack([1, 2], points{2})];
+[worldPoints, reprojectionErrors, valid_index] = triangulateMultiview(tracks, camPoses, camParams);
 scalingFactor = distance / norm(worldPoints(1,:) - worldPoints(2,:));
 
 end

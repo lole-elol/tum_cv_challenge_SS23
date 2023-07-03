@@ -21,7 +21,7 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 p = inputParser;
 p.addOptional('log', true);
 %% Preprocessing Params
-p.addOptional('scalingFactor', 1);
+p.addOptional('scalingFactor', 0.5);
 %% Reconstruction Params
 % Feature extraction parameters
 p.addOptional('numOctaves', 20);
@@ -133,7 +133,9 @@ for i = 2:numImages
 end
 
 % Rotate the point cloud
-[pointCloudInstance, camPoses] = logic.reconstruct3D.rotateScene(pointCloudInstance, camPoses, [1 0 0; 0 0 1; 0 -1 0]);
+R = [1 0 0; 0 0 1; 0 -1 0];
+tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
+[pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
 
 % TODO: Add an extra step to generate more features once we get the full 3D reconstruction
 
