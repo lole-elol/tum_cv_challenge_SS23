@@ -26,7 +26,9 @@ if usePcViewer
 else
     pcshow(pointCloudInstance, VerticalAxisDir='Down', MarkerSize=pcMarkerSize);
     % Show cameras poses
-    plotCamera(camPoses, Size=cameraSizePlotSize);
+    if ~isempty(camPoses)
+        plotCamera(camPoses, Size=cameraSizePlotSize);
+    end
     xlabel('X');
     ylabel('Y');
     zlabel('Z');

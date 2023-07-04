@@ -132,12 +132,8 @@ end
 
 % Rotate the point cloud
 R = [1 0 0; 0 0 1; 0 -1 0];
-tform = rigidtform3d(R, [0 0 0]);
-pointCloudInstance = pctransform(pointCloudInstance, tform);
-% Transform the camera poses to the new coordinate system
-for i = 1:numImages
-    camPoses.AbsolutePose(i) = rigidtform3d(tform.A * camPoses.AbsolutePose(i).A);
-end    
+tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
+[pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
 
 % TODO: Add an extra step to generate more features once we get the full 3D reconstruction
 
