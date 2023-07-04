@@ -15,6 +15,5 @@ cameraParams = logic.reconstruct3D.loadCameraParams(dataDir + "/cameras.txt");
 fprintf('\n Reconstructing 3D...\n')
 [pointCloudInstance, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams);
 
-% Plot the point cloud
+% Denoise the point cloud to plot it afterwards
 denoisedPointCloud = pcdenoise(pointCloudInstance);  % TODO: tweak this or simpply do this step in cuboid fitting, only test
-plotting.plotPointCloud(denoisedPointCloud, camPoses, cameraSizePlotSize=0.2)

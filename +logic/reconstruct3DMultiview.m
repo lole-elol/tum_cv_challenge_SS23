@@ -70,9 +70,7 @@ for i = 1:numImages
         fprintf('Analyzing image %d of %d\r', i, numImages);
     end
     images{i} = imresize(images{i}, scalingFactor);
-    % TODO: for now we only use the grayscale image, but we should use the output of the preprocessImage function
-    % [~, images{i}, ~] = logic.reconstruct3D.preprocessImage(images{i});
-    images{i} = im2gray(images{i});
+    images{i} = logic.reconstruct3D.preprocessImage(images{i});
 end
 % Modify camera parameters to compensate for image resizing
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
@@ -150,12 +148,8 @@ end
 
 % Rotate the point cloud
 R = [1 0 0; 0 0 1; 0 -1 0];
-tform = rigidtform3d(R, [0 0 0]);
-pointCloudInstance = pctransform(pointCloudInstance, tform);
-% Transform the camera poses to the new coordinate system
-for i = 1:numImages
-    camPoses.AbsolutePose(i) = rigidtform3d(tform.A * camPoses.AbsolutePose(i).A);
-end
+tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
+[pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
 
 % TODO: Add an extra step to generate more features once we get the full 3D reconstruction
 
