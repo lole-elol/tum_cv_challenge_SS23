@@ -29,7 +29,7 @@ tScaling = affinetform3d([scalingFactor, 0, 0, 0; 0, scalingFactor, 0, 0; 0, 0, 
 
 % Plot the point cloud unscaled as well as the points of the door frame
 figure
-plotting.plotPointCloud(denoisedPointCloud, camPoses, cameraSizePlotSize=0.2, pcMarkerSize=20)
+plotting.plotPointCloud(denoisedPointCloud, camPoses, cameraSizePlotSize=0.2, pcMarkerSize=10)
 plotting.plotPointCloud(pointCloud(markedPoints, Color=[0,0,1]), [], pcMarkerSize=500);
 xlabel('X [Unknown]');
 ylabel('Y [Unknown]');
@@ -38,7 +38,7 @@ hold off
 
 % Plot the point cloud scaled
 figure
-plotting.plotPointCloud(denoisedPointCloudScaled, camPosesScaled, cameraSizePlotSize=0.2*scalingFactor, pcMarkerSize=20*scalingFactor)
+plotting.plotPointCloud(denoisedPointCloudScaled, camPosesScaled, cameraSizePlotSize=0.2*scalingFactor, pcMarkerSize=10)
 xlabel('X [m]');
 ylabel('Y [m]');
 zlabel('Z [m]');
