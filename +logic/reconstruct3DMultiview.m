@@ -103,7 +103,6 @@ end
 vSet = imageviewset;
 vSet = addView(vSet, 1, rigidtform3d, Points=points{1});
 
-
 for i = 2:numImages
     if log
         fprintf('Matching points of image %d of %d and triangulation with previous images. \r', i, numImages);
@@ -146,70 +145,12 @@ for i = 2:numImages
     % Store the refined camera poses.
     vSet = updateView(vSet, camPoses);
 end
-
-minZ = min(pointCloudInstance.Location(:, 3))
-maxZ = max(pointCloudInstance.Location(:, 3)) 
 % We will use this to filter out points that are too far away.
 % after doing dense reconstruction.
 
 
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
-end
-
-
-% === 4. Dense reconstruction ===
-if log
-    fprintf('Dense reconstruction\n');
-end
-% Create a dense point cloud from the triangulated points and camera poses.
-for i = 1:(numImages-1)
-    if log
-        fprintf('Dense reconstruction of image %d of %d \r', i, numImages-1);
-    end
-    image1 = imagesOriginal{i};
-    image2 = imagesOriginal{i+1};
-    % figure
-    % imshowpair(image1, image2, 'montage');
-    
-    % Compute stereo parameters and rectify the stereo images.
-    relPose = rigidtform3d(poses(vSet, i).AbsolutePose.A \ poses(vSet, i+1).AbsolutePose.A);
-    stereoParams = stereoParameters(cameraParams, cameraParams, relPose);
-    %[image1Rect, image2Rect] = rectifyStereoImages(rgb2gray(image1), rgb2gray(image2), stereoParams);
-    [image1Rect, image2Rect, ~, camMatrix1] = rectifyStereoImages(image1, image2, stereoParams);
-    % imshowpair(image1Rect, image2Rect, 'montage');
-    
-    % Compute disparity.
-    disparityMap = disparitySGM(rgb2gray(image1Rect), rgb2gray(image2Rect));
-    % Remove left most column of zeros from disparity map and corresponding pixels from the rectified image.
-    % figure
-    % imshow(disparityMap);
-    % colormap jet
-    % colorbar
-
-    % Reconstruct the 3-D world coordinates of points corresponding to each pixel from the disparity map.
-    xyzPoints = reconstructScene(disparityMap, stereoParams);
-    
-    % Filter points that are too far away and transform the MxNx3 matrix into a Nx3 matrix
-    roiBorder = 50;  % TODO: make this a parameter
-    roi = zeros(size(disparityMap));
-    roi(roiBorder:end-roiBorder, roiBorder:end-roiBorder) = 1;
-    xyzPoints = reshape(xyzPoints, [], 3);
-    roi = reshape(roi, [], 1);
-    % validIdx = xyzPoints(:, 3) < 1.5*maxZ & xyzPoints(:, 3) > 0.5*minZ & roi;
-    validIdx = xyzPoints(:, 3) < maxZ & roi;
-    xyzPoints = xyzPoints(validIdx, :);
-    xyzPointsInImage1 = (camMatrix1 * [xyzPoints, ones(size(xyzPoints, 1), 1)]')';
-    xyzPointsInImage1 = floor(xyzPointsInImage1(:, 2:-1:1) ./ xyzPointsInImage1(:, 3));
-    pixelColors = impixel(image1Rect, xyzPointsInImage1(: , 1), xyzPointsInImage1(: , 2));
-
-
-    % create a pointCloud object and assing the color of the original image at the corresponding pixel
-    size(xyzPoints)
-    pointCloudInstance = pccat([pointCloudInstance, pointCloud(xyzPoints, Color=pixelColors)]);
-end
-if log
-    fprintf('\nDense reconstruction finished after %.2f seconds.\n', toc);
 end
 
 % Rotate the point cloud
