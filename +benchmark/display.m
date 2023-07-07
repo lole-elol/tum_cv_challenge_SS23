@@ -37,10 +37,18 @@ if showReconstruction
             subplot(ceil(size(outData, 2)/2), 2, j)
             title('Point Cloud ' + string(j))
             results = outData{i, j};
+
+            % Check if cell is "Error" instead of ceall array with results
+            if strcmp(results, 'Error')
+                disp("Point Cloud " + string(j) + " could not be reconstructed.")
+                continue
+            end
+
             pointCloudInstance = results{1};
-            disp("Point Cloud " + string(j) + " has " + string(pointCloudInstance.Count) + " points.")
+            pcFilter = logic.pointcloud.filter(pointCloudInstance, 3);
+            disp("Point Cloud " + string(j) + " has " + string(pcFilter.Count) + " points.")
             camPoses = results{2};
-            plotting.plotPointCloud(pointCloudInstance, camPoses)
+            plotting.plotPointCloud(pcFilter, camPoses)
         end
         input('Press any key to continue...')
     end
