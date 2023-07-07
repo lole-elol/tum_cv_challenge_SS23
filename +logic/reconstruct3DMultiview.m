@@ -12,6 +12,10 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 %   eMaxNumTrials - the maximum number of trials for the epipolar geometry
 %   eValidPointFraction - the minimum fraction of points that must be in front of both cameras for the epipolar geometry to be valid
 %   maxReprojectionError - the maximum reprojection error for a point to be considered valid
+%   presort - the type of presorting to use. Options are: FFT2, HIST, PCA
+%   presortNearestNeighbors - whether to presort by nearest neighbors or by 1D features
+%   presortFeatures - the length of the feature vector
+%   presortNormalize - whether to normalize the features before presorting
 % Output:
 %   pointCloudInstance - a pointCloud object
 %   camPoses - a table containing the camera poses
@@ -34,6 +38,11 @@ p.addOptional('eMaxNumTrials', 100000);
 p.addOptional('eValidPointFraction', 0.8);
 % Triangulation parameters
 p.addOptional('maxReprojectionError', 20);
+% Presorting parameters
+p.addOptional('presort', 'FFT2');
+p.addOptional('presortNearestNeighbors', true);
+p.addOptional('presortFeatures', 1);
+p.addOptional('presortNormalize', true);
 
 p.parse(varargin{:});
 log = p.Results.log;
@@ -46,9 +55,12 @@ eConfidence = p.Results.eConfidence;
 eMaxNumTrials = p.Results.eMaxNumTrials;
 eValidPointFraction = p.Results.eValidPointFraction;
 maxReprojectionError = p.Results.maxReprojectionError;
+presort = p.Results.presort;
+presortNearestNeighbors = p.Results.presortNearestNeighbors;
+presortFeatures = p.Results.presortFeatures;
+presortNormalize = p.Results.presortNormalize;
 % =========================
 
-imagesOriginal = images;
 numImages = length(images);
 tic;
 if log
@@ -59,11 +71,15 @@ for i = 1:numImages
     if log
         fprintf('Analyzing image %d of %d\r', i, numImages);
     end
-    imagesOriginal{i} = imresize(imagesOriginal{i}, scalingFactor);
-    images{i} = logic.reconstruct3D.preprocessImage(imagesOriginal{i});
-end 
+    images{i} = imresize(images{i}, scalingFactor);
+    images{i} = logic.reconstruct3D.preprocessImage(images{i});
+end
 % Modify camera parameters to compensate for image resizing
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
+
+% Presort images
+fprintf('Presorting images\n');
+images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
 
 if log
     fprintf('\nPreprocessing finished in %f seconds.\n', toc);
@@ -128,7 +144,7 @@ for i = 2:numImages
         size(relPose)
         relPose = relPose(1);
     end
-    currPose = rigidtform3d(prevPose.A * relPose.A); 
+    currPose = rigidtform3d(prevPose.A * relPose.A);
 
     % Add the current view to the view set.
     vSet = addView(vSet, i, currPose, Points=points{i});

@@ -42,7 +42,7 @@ if testReconstruction
     end
     for i = 1:length(inPath)
         path = inPath{i};
-        images = util.loadImages(path + '/images', numImages=numImages); 
+        images = util.loadImages(path + '/images', numImages=numImages);
         cameraParams = logic.reconstruct3D.loadCameraParams(path + '/cameras.txt');
         scenes{i} = {images, cameraParams};
         fprintf("\n");
@@ -79,7 +79,7 @@ if testReconstruction
 
     % Run the benchmark by running the reconstruction algorithm with each
     % parameter combination and each scene. Save the output data.
-    outData = cell(numCombinations, numScenes);  
+    outData = cell(numCombinations, numScenes);
     testPCs = cell(numCombinations, 1);  % PC that will be passed to the detection benchmarking
     for i=1:numCombinations
         paramsTable = reconstructionParams(i, :);
@@ -91,15 +91,20 @@ if testReconstruction
         params = util.getParamsFromTable(paramsTable);
 
         for j = 1:numScenes
-            scene = scenes{j};
-            images = scene{1};
-            cameraParams = scene{2};
-            disp('Running scene ' + string(j) + ' of ' + string(numScenes));
-            tic
-            [testPCs{i}, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams, params{:});
-            t = toc;
-            outData{i, j} = {testPCs{i}, camPoses, tracks, t};
-            disp('Time: ' + string(t) + 's');
+            try
+                scene = scenes{j};
+                images = scene{1};
+                cameraParams = scene{2};
+                disp('Running scene ' + string(j) + ' of ' + string(numScenes));
+                tic
+                [testPCs{i}, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams, params{:});
+                t = toc;
+                outData{i, j} = {testPCs{i}, camPoses, tracks, t};
+                disp('Time: ' + string(t) + 's');
+            catch
+                disp('Error running scene ' + string(j) + ' of ' + string(numScenes));
+                outData{i, j} = "Error";
+            end
         end
     end
     % Save output data
