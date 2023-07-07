@@ -25,9 +25,10 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 p = inputParser;
 p.addOptional('log', true);
 %% Preprocessing Params
-p.addOptional('scalingFactor', 0.5);
+p.addOptional('scalingFactor', 0.25);
 %% Reconstruction Params
 % Feature extraction parameters
+p.addOptional('featureExtractionMethod', 'SURF');
 p.addOptional('numOctaves', 20);
 p.addOptional('roiBorder', 20);
 % Epipolar geometry parameters
@@ -46,6 +47,7 @@ p.addOptional('presortNormalize', true);
 p.parse(varargin{:});
 log = p.Results.log;
 scalingFactor = p.Results.scalingFactor;
+featureExtractionMethod = p.Results.featureExtractionMethod;
 numOctaves = p.Results.numOctaves;
 roiBorder = p.Results.roiBorder;
 eMaxDistance = p.Results.eMaxDistance;
@@ -60,7 +62,7 @@ presortNormalize = p.Results.presortNormalize;
 % =========================
 
 numImages = length(images);
-
+tic;
 if log
     fprintf('Starting preprocessing\n');
 end
@@ -80,70 +82,91 @@ fprintf('Presorting images\n');
 images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
 
 if log
-    fprintf('\nPreprocessing finished.\n');
+    fprintf('\nPreprocessing finished in %f seconds.\n', toc);
 end
 % =========================
 
-%% === 2. Feature Extraction First Image ===
-image1 = images{1};
+%% === 2. Extract Features ===
+% We first extract the features/points of all the images and save them on a cell
+% array. This is done to avoid recomputing the features when matching the
+% images.
+if log
+    fprintf('Extracting features\n');
+end
+features = cell(numImages, 1);
+points = cell(numImages, 1);
+for i = 1:numImages
+    if log
+        fprintf('Extracting features of image %d of %d\r', i, numImages);
+    end
+    currentImage = images{i};
+    [points{i}, features{i}] = logic.reconstruct3D.extractFeatures(currentImage, ...
+                                                                   method=featureExtractionMethod, ...
+                                                                   numOctaves=numOctaves, roiBorder=roiBorder);
+end
+if log
+    fprintf('\nFeature extraction finished in %f seconds.\n', toc);
+end
+
+% === 3. Feature Matching and triangulation ===
 % The object vSet contains the view set that stores the views (camera pose, feature vectors and points) and the connections
 % (relative poses and point matches) between the views.
 if log
-    tic;
-    fprintf("Generating view set and finding features of first picture\n");
+    fprintf("Generating view set\n");
 end
-[vSet, prevFeatures, prevPoints] = logic.reconstruct3D.createViewSet(image1, numOctaves=numOctaves, roiBorder=roiBorder);
+% Create an empty imageviewset object to manage the data associated with each view.
+% Add the first view. Place the camera associated with the first view and the origin, oriented along the Z-axis.
+vSet = imageviewset;
+vSet = addView(vSet, 1, rigidtform3d, Points=points{1});
 
-% === 3. Feature Extraction and matching remaining Images ===
 for i = 2:numImages
     if log
-        fprintf('Matching points of image %d of %d\r', i, numImages);
+        fprintf('Matching points of image %d of %d and triangulation with previous images. \r', i, numImages);
     end
-    % Load the current image and extract common features to all previous views.
-    currentImage = images{i};
-
-    [matchedPoints1, matchedPoints2, currPoints, currFeatures, indexPairs] = logic.reconstruct3D.extractCommonFeaturesMultiView(currentImage, prevFeatures, prevPoints, ...
-                                                                                                                                numOctaves=numOctaves, roiBorder=roiBorder);
+    % Match the features between the previous and the current image.
+    indexPairs   = matchFeatures(features{i-1}, features{i}, 'Unique', true);
+    matchedPointsPrev = points{i-1}(indexPairs(:, 1));
+    matchedPointsCurr = points{i}(indexPairs(:, 2));
 
     % Estimate the camera pose of current view relative to the previous view.
     % The pose is computed up to scale, meaning that the distance between
     % the cameras in the previous view and the current view is set to 1.
     % This will be corrected by the bundle adjustment.
-    [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPoints1, matchedPoints2, cameraParams, ...
+    [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
                                                                               eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
 
-    % Get the table containing the previous camera pose.
+    
+                                                                              % Get the table containing the previous camera pose.
     prevPose = poses(vSet, i-1).AbsolutePose;
-
     % Compute the current camera pose in the global coordinate system
     % relative to the first view.
-    if length(relPose) > 1  % TODO: BUG sometimes two poses are returned. This is a workaround
+    if length(relPose) > 1  % TODO: BUG sometimes two poses are returned. This is a workaround.
         size(relPose)
         relPose = relPose(1);
     end
     currPose = rigidtform3d(prevPose.A * relPose.A);
 
     % Add the current view to the view set.
-    vSet = addView(vSet, i, currPose, Points=currPoints);
-
+    vSet = addView(vSet, i, currPose, Points=points{i});
     % Store the point matches between the previous and the current views.
     vSet = addConnection(vSet, i-1, i, relPose, Matches=indexPairs(inlierIdx, :));
-
-    % Find point tracks across all views.
-    tracks = findTracks(vSet);
-
+    tracks = findTracks(vSet);  % Find point tracks across all views.
     % Get the table containing camera poses for all views.
     camPoses = poses(vSet);
 
+    % Triangulate initial locations for the 3-D world points and do bundle adjustment.
     [pointCloudInstance, camPoses] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
                                                                                         maxReprojectionError=maxReprojectionError);
 
     % Store the refined camera poses.
     vSet = updateView(vSet, camPoses);
+end
+% We will use this to filter out points that are too far away.
+% after doing dense reconstruction.
 
-    prevFeatures = currFeatures;
-    prevPoints = currPoints;
 
+if log
+    fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
 end
 
 % Rotate the point cloud
@@ -151,9 +174,4 @@ R = [1 0 0; 0 0 1; 0 -1 0];
 tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
 [pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
 
-% TODO: Add an extra step to generate more features once we get the full 3D reconstruction
-
-if log
-    fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
-end
 end

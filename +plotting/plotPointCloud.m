@@ -14,16 +14,18 @@ p = inputParser;
 p.addOptional('usePcViewer', false, @islogical);
 p.addOptional('cameraSizePlotSize', 0.2, @isnumeric);
 p.addOptional('pcMarkerSize', 45, @isnumeric);
+p.addOptional('pcViewerMarkerSize', 5, @isnumeric);
 p.parse(varargin{:});
 usePcViewer = p.Results.usePcViewer;
 cameraSizePlotSize = p.Results.cameraSizePlotSize;
 pcMarkerSize = p.Results.pcMarkerSize;
+pcViewerMarkerSize = p.Results.pcViewerMarkerSize;
 
-hold on;
 
 if usePcViewer
-    pcviewer(pointCloudInstance, PointSize=1);
+    pcviewer(pointCloudInstance, PointSize=pcViewerMarkerSize);
 else
+    hold on;
     pcshow(pointCloudInstance, VerticalAxisDir='Down', MarkerSize=pcMarkerSize);
     % Show cameras poses
     if ~isempty(camPoses)
