@@ -10,7 +10,7 @@ testCloud.mat: the pointcloud object (input of modelDetection)
 --> RUN function with testsets (no need to give arguments, just run gui.Gui)
 
 Window will appear: 2 options: 
-* press Import button to upload images --> select folder with .jpg format
+* press Import button to upload images --> select folder with .jpg format files inside
 (takes a while, if database is large)
 
 * press button Reconstruct Room --> shows 3D room of test-data
