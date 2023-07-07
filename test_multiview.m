@@ -5,7 +5,7 @@
 dataDir = "test/delivery_area_dslr_undistorted";
 
 if exist('images','var') == 0  % Load the images if they are not already loaded yet
-    images = util.loadImages(dataDir + "/images", log=true, numImages=3);
+    images = util.loadImages(dataDir + "/images", log=true, numImages=2);
 end
 
 % Load the camera parameters
@@ -13,7 +13,17 @@ cameraParams = logic.reconstruct3D.loadCameraParams(dataDir + "/cameras.txt");
 
 % Reconstruct3d multiview
 fprintf('\n Reconstructing 3D...\n')
-[pointCloudInstance, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams);
+[pointCloudInstance, camPoses, tracks, maxZ] = logic.reconstruct3DMultiview(images, cameraParams);
+
+% Dense reconstruction
+% fprintf('\n Dense reconstruction...\n')
+pointCloudDense = logic.reconstruct3D.denseMatching(pointCloudInstance, images, camPoses, cameraParams, numImages=2, maxZ=maxZ);
+
+% Rotate the point cloud
+R = [1 0 0; 0 0 1; 0 -1 0];
+tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
+[pointCloudDense, camPoses] = logic.reconstruct3D.transformScene(pointCloudDense, camPoses, tform);
+
 
 % Denoise the point cloud to plot it afterwards
-denoisedPointCloud = pcdenoise(pointCloudInstance);  % TODO: tweak this or simpply do this step in cuboid fitting, only test
+denoisedPointCloud = pcdenoise(pointCloudDense);  % TODO: tweak this or simpply do this step in cuboid fitting, only test

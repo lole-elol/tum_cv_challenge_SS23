@@ -1,4 +1,4 @@
-function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images, cameraParams, varargin)
+function [pointCloudInstance, camPoses, tracks, maxZ] = reconstruct3DMultiview(images, cameraParams, varargin)
 % RECONSTRUCT3DMULTIVIEW Reconstructs a 3D point cloud from multiple images
 % Input:
 %   images - a cell array of images
@@ -25,7 +25,7 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 p = inputParser;
 p.addOptional('log', true);
 %% Preprocessing Params
-p.addOptional('scalingFactor', 0.25);
+p.addOptional('scalingFactor', 1);
 %% Reconstruction Params
 % Feature extraction parameters
 p.addOptional('featureExtractionMethod', 'SURF');
@@ -163,15 +163,10 @@ for i = 2:numImages
 end
 % We will use this to filter out points that are too far away.
 % after doing dense reconstruction.
-
+maxZ = max(pointCloudInstance.Location(:, 3));
 
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
 end
-
-% Rotate the point cloud
-R = [1 0 0; 0 0 1; 0 -1 0];
-tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
-[pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
 
 end
