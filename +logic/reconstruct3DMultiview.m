@@ -78,8 +78,9 @@ end
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
 
 % Presort images
-fprintf('Presorting images\n');
-images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+%fprintf('Presorting images\n');
+%images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+[~, similarityMatrix] = logic.similarity(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
 
 if log
     fprintf('\nPreprocessing finished in %f seconds.\n', toc);
@@ -119,37 +120,59 @@ end
 vSet = imageviewset;
 vSet = addView(vSet, 1, rigidtform3d, Points=points{1});
 
-for i = 2:numImages
+prevIdx = 1;
+similarityMatrix(:, prevIdx) = inf;
+
+for i=2:numImages
     if log
-        fprintf('Matching points of image %d of %d and triangulation with previous images. \r', i, numImages);
+        fprintf('Matching points of image %d of %d and triangulation with previous images. - ID: %d \r', i, numImages, prevIdx);
     end
-    % Match the features between the previous and the current image.
-    indexPairs   = matchFeatures(features{i-1}, features{i}, 'Unique', true);
-    matchedPointsPrev = points{i-1}(indexPairs(:, 1));
-    matchedPointsCurr = points{i}(indexPairs(:, 2));
 
-    % Estimate the camera pose of current view relative to the previous view.
-    % The pose is computed up to scale, meaning that the distance between
-    % the cameras in the previous view and the current view is set to 1.
-    % This will be corrected by the bundle adjustment.
-    [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
-                                                                              eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
+    k = 0;
+    status = 1;
+    while status ~= 0
+        % Find the best match between the previous and the current image.
 
-    
-                                                                              % Get the table containing the previous camera pose.
-    prevPose = poses(vSet, i-1).AbsolutePose;
+        if k == 0
+            currIdx = prevIdx + 1;
+        else
+            currIdx = logic.kNearestNeighbour(similarityMatrix(prevIdx, :), k);
+        end
+
+        %similarityMatrix(currIdx, :) = inf;
+
+        % Match the features between the previous and the current image.
+        indexPairs   = matchFeatures(features{prevIdx}, features{currIdx}, 'Unique', true);
+        matchedPointsPrev = points{prevIdx}(indexPairs(:, 1));
+        matchedPointsCurr = points{currIdx}(indexPairs(:, 2));
+
+        % Estimate the camera pose of current view relative to the previous view.
+        % The pose is computed up to scale, meaning that the distance between
+        % the cameras in the previous view and the current view is set to 1.
+        % This will be corrected by the bundle adjustment.
+        [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
+                                                                                eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
+
+        disp(status)
+        k = k + 1;
+    end
+
+    similarityMatrix(:, prevIdx) = inf;
+
+     % Get the table containing the previous camera pose.
+    prevPose = poses(vSet, prevIdx).AbsolutePose;
     % Compute the current camera pose in the global coordinate system
     % relative to the first view.
     if length(relPose) > 1  % TODO: BUG sometimes two poses are returned. This is a workaround.
-        size(relPose)
+        size(relPose);
         relPose = relPose(1);
     end
     currPose = rigidtform3d(prevPose.A * relPose.A);
 
     % Add the current view to the view set.
-    vSet = addView(vSet, i, currPose, Points=points{i});
+    vSet = addView(vSet, currIdx, currPose, Points=points{currIdx});
     % Store the point matches between the previous and the current views.
-    vSet = addConnection(vSet, i-1, i, relPose, Matches=indexPairs(inlierIdx, :));
+    vSet = addConnection(vSet, prevIdx, currIdx, relPose, Matches=indexPairs(inlierIdx, :));
     tracks = findTracks(vSet);  % Find point tracks across all views.
     % Get the table containing camera poses for all views.
     camPoses = poses(vSet);
@@ -160,6 +183,8 @@ for i = 2:numImages
 
     % Store the refined camera poses.
     vSet = updateView(vSet, camPoses);
+
+    prevIdx = currIdx;
 end
 % We will use this to filter out points that are too far away.
 % after doing dense reconstruction.

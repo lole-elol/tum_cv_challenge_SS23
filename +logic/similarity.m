@@ -59,7 +59,7 @@ if lazy
   win = gausswin(2*n);
 
   wheights = win(1:n);
-  wheights(1) = wheights(1) / 2;
+  wheights(1) = wheights(1)^2;
   %wheights = wheights / sum(wheights);
 
   wheightMat = toeplitz(wheights, [wheights(1), zeros(1, n-1)]);
