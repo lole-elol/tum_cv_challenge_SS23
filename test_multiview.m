@@ -3,9 +3,10 @@
 
 % dataDir = "test/old_computer";
 dataDir = "test/delivery_area_dslr_undistorted";
+% dataDir = "test/kicker_dslr_undistorted";
 
 if exist('images','var') == 0  % Load the images if they are not already loaded yet
-    images = util.loadImages(dataDir + "/images", log=true, numImages=3);
+    images = util.loadImages(dataDir + "/images", log=true, numImages=10);
 end
 
 % Load the camera parameters
@@ -15,5 +16,12 @@ cameraParams = logic.reconstruct3D.loadCameraParams(dataDir + "/cameras.txt");
 fprintf('\n Reconstructing 3D...\n')
 [pointCloudInstance, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams);
 
+% Dense reconstruction
+% fprintf('\n Dense reconstruction...\n')
+% pointCloudDense = logic.reconstruct3D.denseMatchingDisparity(pointCloudInstance, images, camPoses, cameraParams, numImages=2);
+% pointCloudDense = logic.reconstruct3D.denseMatchingFeature(pointCloudInstance, images, camPoses, vSet, cameraParams);
+pointCloudDense = pointCloudInstance;
+
 % Denoise the point cloud to plot it afterwards
-denoisedPointCloud = pcdenoise(pointCloudInstance);  % TODO: tweak this or simpply do this step in cuboid fitting, only test
+denoisedPointCloud = pcdenoise(pointCloudDense, 'NumNeighbors', 3, 'Threshold', 0.5);
+denoisedPointCloud2 = pcdenoise(pointCloudInstance, 'NumNeighbors', 3, 'Threshold', 0.5);
