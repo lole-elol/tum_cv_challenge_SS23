@@ -25,12 +25,12 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 p = inputParser;
 p.addOptional('log', true);
 %% Preprocessing Params
-p.addOptional('scalingFactor', 0.25);
+p.addOptional('scalingFactor', 0.5);
 %% Reconstruction Params
 % Feature extraction parameters
 p.addOptional('featureExtractionMethod', 'SURF');
 p.addOptional('numOctaves', 20);
-p.addOptional('roiBorder', 20);
+p.addOptional('roiBorder', 2);
 % Epipolar geometry parameters
 p.addOptional('eMaxDistance', 5);
 p.addOptional('eConfidence', 99.6);
@@ -67,19 +67,21 @@ if log
     fprintf('Starting preprocessing\n');
 end
 %% === 1. Preprocessing ===
+imagesOriginal = cell(numImages, 1);
 for i = 1:numImages
     if log
         fprintf('Analyzing image %d of %d\r', i, numImages);
     end
     images{i} = imresize(images{i}, scalingFactor);
+    imagesOriginal{i} = images{i};  % Save original image for later use
     images{i} = logic.reconstruct3D.preprocessImage(images{i});
 end
 % Modify camera parameters to compensate for image resizing
-cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
+cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, [size(images{1},1), size(images{1},2)]);
 
 % Presort images
 fprintf('Presorting images\n');
-images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+% images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
 
 if log
     fprintf('\nPreprocessing finished in %f seconds.\n', toc);
@@ -155,23 +157,21 @@ for i = 2:numImages
     camPoses = poses(vSet);
 
     % Triangulate initial locations for the 3-D world points and do bundle adjustment.
-    [pointCloudInstance, camPoses] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
+    [worldPoints, camPoses, tracks] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
                                                                                         maxReprojectionError=maxReprojectionError);
-
     % Store the refined camera poses.
     vSet = updateView(vSet, camPoses);
 end
-% We will use this to filter out points that are too far away.
-% after doing dense reconstruction.
 
-
-if log
-    fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
-end
+pointCloudInstance = logic.reconstruct3D.getColoredPointCloud(worldPoints, tracks, imagesOriginal);
 
 % Rotate the point cloud
 R = [1 0 0; 0 0 1; 0 -1 0];
 tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
 [pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
+
+if log
+    fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
+end
 
 end
