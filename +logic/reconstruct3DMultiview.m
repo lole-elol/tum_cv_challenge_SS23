@@ -1,4 +1,4 @@
-function [pointCloudInstance, camPoses, tracks, maxZ] = reconstruct3DMultiview(images, cameraParams, varargin)
+function [pointCloudInstance, camPoses, vSet, tracks, maxZ] = reconstruct3DMultiview(images, cameraParams, varargin)
 % RECONSTRUCT3DMULTIVIEW Reconstructs a 3D point cloud from multiple images
 % Input:
 %   images - a cell array of images
@@ -25,7 +25,7 @@ function [pointCloudInstance, camPoses, tracks, maxZ] = reconstruct3DMultiview(i
 p = inputParser;
 p.addOptional('log', true);
 %% Preprocessing Params
-p.addOptional('scalingFactor', 1);
+p.addOptional('scalingFactor', 1.0);
 %% Reconstruction Params
 % Feature extraction parameters
 p.addOptional('featureExtractionMethod', 'SURF');
@@ -75,11 +75,11 @@ for i = 1:numImages
     images{i} = logic.reconstruct3D.preprocessImage(images{i});
 end
 % Modify camera parameters to compensate for image resizing
-cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
+cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, [size(images{1},1), size(images{1},2)]);
 
 % Presort images
 fprintf('Presorting images\n');
-images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+% images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
 
 if log
     fprintf('\nPreprocessing finished in %f seconds.\n', toc);
@@ -161,9 +161,69 @@ for i = 2:numImages
     % Store the refined camera poses.
     vSet = updateView(vSet, camPoses);
 end
+
+% intrinsics = cameraParams.Intrinsics;
+% % Read and undistort the first image
+% I = images{1}; 
+
+% % Detect corners in the first image.
+% prevPoints = detectMinEigenFeatures(I, MinQuality=0.001);
+
+% % Create the point tracker object to track the points across views.
+% tracker = vision.PointTracker(MaxBidirectionalError=1, NumPyramidLevels=6);
+
+% % Initialize the point tracker.
+% prevPoints = prevPoints.Location;
+% initialize(tracker, prevPoints, I);
+
+% % Store the dense points in the view set.
+
+% vSet = updateConnection(vSet, 1, 2, Matches=zeros(0, 2));
+% vSet = updateView(vSet, 1, Points=prevPoints);
+
+% % Track the points across all views.
+% for i = 2:numel(images)
+%     % Read and undistort the current image.
+%     I = images{i}; 
+    
+%     % Track the points.
+%     [currPoints, validIdx] = step(tracker, I);
+    
+%     % Clear the old matches between the points.
+%     if i < numel(images)
+%         vSet = updateConnection(vSet, i, i+1, Matches=zeros(0, 2));
+%     end
+%     vSet = updateView(vSet, i, Points=currPoints);
+    
+%     % Store the point matches in the view set.
+%     matches = repmat((1:size(prevPoints, 1))', [1, 2]);
+%     matches = matches(validIdx, :);        
+%     vSet = updateConnection(vSet, i-1, i, Matches=matches);
+% end
+
+% % Find point tracks across all views.
+% tracks = findTracks(vSet);
+
+% % Find point tracks across all views.
+% camPoses = poses(vSet);
+
+% % Triangulate initial locations for the 3-D world points.
+% xyzPoints = triangulateMultiview(tracks, camPoses,...
+%     intrinsics);
+
+% % Refine the 3-D world points and camera poses.
+% [xyzPoints, camPoses, reprojectionErrors] = bundleAdjustment(...
+%     xyzPoints, tracks, camPoses, intrinsics, FixedViewId=1, ...
+%     PointsUndistorted=false);
+
+% xyzPoints = xyzPoints(reprojectionErrors < 5, :);
+
+% pointCloudInstance = pointCloud(xyzPoints, 'Color', [0.8, 0.8, 0.8]);
+
+
 % We will use this to filter out points that are too far away.
 % after doing dense reconstruction.
-maxZ = max(pointCloudInstance.Location(:, 3));
+maxZ = max(pointCloudInstance.Location(:, 3))
 
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);

@@ -13,11 +13,12 @@ cameraParams = logic.reconstruct3D.loadCameraParams(dataDir + "/cameras.txt");
 
 % Reconstruct3d multiview
 fprintf('\n Reconstructing 3D...\n')
-[pointCloudInstance, camPoses, tracks, maxZ] = logic.reconstruct3DMultiview(images, cameraParams);
+[pointCloudInstance, camPoses, vSet, tracks, maxZ] = logic.reconstruct3DMultiview(images, cameraParams);
 
 % Dense reconstruction
 % fprintf('\n Dense reconstruction...\n')
-pointCloudDense = logic.reconstruct3D.denseMatching(pointCloudInstance, images, camPoses, cameraParams, numImages=2, maxZ=maxZ);
+pointCloudDense = logic.reconstruct3D.denseMatching(pointCloudInstance, images, camPoses, vSet, cameraParams, numImages=2, maxZ=maxZ);
+% pointCloudDense = pointCloudInstance;
 
 % Rotate the point cloud
 R = [1 0 0; 0 0 1; 0 -1 0];

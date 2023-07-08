@@ -9,18 +9,21 @@ function [points, features] = extractFeatures(image, ~, varargin)
 %                       'FAST', 'Harris' or 'BRISK'
 %      numOctaves = 20 - The number of octaves used for SURF
 %      roiBorder = 20  - The border around the image that is not used for SURF
+%      minQuality = 0.001 - The minimum quality for minEigen
 %   Outputs:
 %      points          - The points of the features
 %      features        - The features
 
 p = inputParser;
-p.addOptional('method', 'SURF', @(x) any(validatestring(x, {'SURF', 'FAST', 'Harris', 'BRISK'})));
+p.addOptional('method', 'SURF', @(x) any(validatestring(x, {'SURF', 'FAST', 'Harris', 'BRISK', 'minEigen'})));
 p.addOptional('numOctaves', 20);
 p.addOptional('roiBorder', 20);
+p.addOptional('minQuality', 0.001);
 p.parse(varargin{:});
 method = p.Results.method;
 numOctaves = p.Results.numOctaves;
 roiBorder = p.Results.roiBorder;
+minQuality = p.Results.minQuality;
 
 % Detect features in the images 
 % https://de.mathworks.com/help/vision/ug/point-feature-types.html
@@ -37,6 +40,11 @@ elseif strcmp(p.Results.method, 'Harris')
 elseif strcmp(p.Results.method, 'BRISK')
     points = detectBRISKFeatures(image);
     features = extractFeatures(image, points);
+elseif strcmp(p.Results.method, 'minEigen')
+    points = detectMinEigenFeatures(image, MinQuality=minQuality);
+    features = extractFeatures(image, points);
+else
+    error('Unknown method')
 end
 
 

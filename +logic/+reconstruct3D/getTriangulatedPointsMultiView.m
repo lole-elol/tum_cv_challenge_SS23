@@ -3,7 +3,7 @@ function [pointCloudInstance, camPoses] = getTriangulatedPointsMultiView(tracks,
     % Compute the 3D points from the camera pose
     p = inputParser;
     p.addOptional('image', []);
-    p.addOptional('maxReprojectionError', 20);
+    p.addOptional('maxReprojectionError', 5);
     p.parse(varargin{:});
     maxReprojectionError = p.Results.maxReprojectionError;
 
