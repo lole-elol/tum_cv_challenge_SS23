@@ -6,7 +6,7 @@ dataDir = "test/delivery_area_dslr_undistorted";
 % dataDir = "test/kicker_dslr_undistorted";
 
 if exist('images','var') == 0  % Load the images if they are not already loaded yet
-    images = util.loadImages(dataDir + "/images", log=true, numImages=30);
+    images = util.loadImages(dataDir + "/images", log=true, numImages=10);
 end
 
 % Load the camera parameters
@@ -18,15 +18,9 @@ fprintf('\n Reconstructing 3D...\n')
 
 % Dense reconstruction
 % fprintf('\n Dense reconstruction...\n')
-%pointCloudDense = logic.reconstruct3D.denseMatchingDisparity(pointCloudInstance, images, camPoses, cameraParams, numImages=2);
+% pointCloudDense = logic.reconstruct3D.denseMatchingDisparity(pointCloudInstance, images, camPoses, cameraParams, numImages=2);
 % pointCloudDense = logic.reconstruct3D.denseMatchingFeature(pointCloudInstance, images, camPoses, vSet, cameraParams);
 pointCloudDense = pointCloudInstance;
-
-% % Rotate the point cloud
-R = [1 0 0; 0 0 1; 0 -1 0];
-tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
-[pointCloudDense, camPoses] = logic.reconstruct3D.transformScene(pointCloudDense, camPoses, tform);
-
 
 % Denoise the point cloud to plot it afterwards
 denoisedPointCloud = pcdenoise(pointCloudDense, 'NumNeighbors', 3, 'Threshold', 0.5);

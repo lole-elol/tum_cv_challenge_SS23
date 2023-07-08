@@ -165,6 +165,11 @@ end
 
 pointCloudInstance = logic.reconstruct3D.getColoredPointCloud(worldPoints, tracks, imagesOriginal);
 
+% Rotate the point cloud
+R = [1 0 0; 0 0 1; 0 -1 0];
+tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
+[pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
+
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
 end
