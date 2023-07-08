@@ -39,7 +39,7 @@ p.addOptional('eValidPointFraction', 0.8);
 % Triangulation parameters
 p.addOptional('maxReprojectionError', 20);
 % Presorting parameters
-p.addOptional('presort', 'FFT2');
+p.addOptional('presort', 'HIST');
 p.addOptional('presortNearestNeighbors', true);
 p.addOptional('presortFeatures', 1);
 p.addOptional('presortNormalize', true);
@@ -80,7 +80,7 @@ end
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, [size(images{1},1), size(images{1},2)]);
 
 % Presort images
-fprintf('Presorting images\n');
+% fprintf('Presorting images\n');
 % images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
 
 if log
@@ -110,6 +110,47 @@ if log
     fprintf('\nFeature extraction finished in %f seconds.\n', toc);
 end
 
+
+matchThreshold = 0.7;
+loopClosureThreshold = 2500;
+% Initialize loop closure detection variables
+loopClosureDetected = false;
+loopClosureImageIndices = [];
+
+for i = 1:numImages
+    % Get the features and points of the current image
+    currentFeatures = features{i};
+    currentPoints = points{i};
+    
+    % Perform feature matching with previous images
+    for j = 1:i-1
+        % Get the features and points of the previous image
+        previousFeatures = features{j};
+        previousPoints = points{j};
+        
+        % Perform feature matching
+        indexPairs = matchFeatures(currentFeatures, previousFeatures, 'MatchThreshold', matchThreshold);
+        
+        % Check if loop closure is detected
+        numMatches = size(indexPairs, 1);
+        if numMatches >= loopClosureThreshold
+            loopClosureDetected = true;
+            loopClosureImageIndices = [j, i];  % Store the indices of the loop closure images
+            break;  % Exit the loop if loop closure is detected
+        end
+    end
+    
+    if loopClosureDetected
+        break;  % Exit the loop if loop closure is detected
+    end
+end
+
+if loopClosureDetected
+    fprintf('Loop closure detected between images %d and %d\n', loopClosureImageIndices(1), loopClosureImageIndices(2));
+else
+    fprintf('No loop closure detected\n');
+end
+
 % === 3. Feature Matching and triangulation ===
 % The object vSet contains the view set that stores the views (camera pose, feature vectors and points) and the connections
 % (relative poses and point matches) between the views.
@@ -121,12 +162,42 @@ end
 vSet = imageviewset;
 vSet = addView(vSet, 1, rigidtform3d, Points=points{1});
 
+% matchedPointsLoopClosure = []; % Matched points for loop closure
+% matchedPointsCurrent = []; % Matched points in the current keyframe
+% loopClosureIndex = 0;
+% loopClosureThreshhold = 200; % Threshold for loop closure detection
+% matchedPointsCounts = zeros(numImages-1, 1); % Number of matched points for each image
+% 
+% % Loop over the images and find closures
+% for i = 2:numImages
+%     indexPairs = matchFeatures(features{i-1}, features{i}, 'Unique', true);
+% 
+%     % Count the number of matched features
+%     matchedPointsCount = size(indexPairs, 1);
+%     matchedPointsCounts(i-1) = matchedPointsCount;
+% 
+%     % Check if loop closure is detected based on the number of matched features
+%     if size(indexPairs, 1) > loopClosureThreshhold || (i == 31)
+%         loopClosureIndex = i;
+%         matchedPointsLoopClosure = points{i}(indexPairs(:, 2));
+%         matchedPointsCurrent = points{i-1}(indexPairs(:, 1));
+%         break;
+%     end 
+% end
+% 
+% figure;
+% plot(2:numImages, matchedPointsCounts);
+% xlabel('Keyframe Index');
+% ylabel('Number of Matched Points');
+% title('Number of Matched Points in the Loop over Keyframes');
+% grid on;
+
 for i = 2:numImages
     if log
         fprintf('Matching points of image %d of %d and triangulation with previous images. \r', i, numImages);
     end
     % Match the features between the previous and the current image.
-    indexPairs   = matchFeatures(features{i-1}, features{i}, 'Unique', true);
+    indexPairs = matchFeatures(features{i-1}, features{i}, 'Unique', true);
     matchedPointsPrev = points{i-1}(indexPairs(:, 1));
     matchedPointsCurr = points{i}(indexPairs(:, 2));
 
@@ -137,8 +208,8 @@ for i = 2:numImages
     [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
                                                                               eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
 
-    
-                                                                              % Get the table containing the previous camera pose.
+
+    % Get the table containing the previous camera pose.
     prevPose = poses(vSet, i-1).AbsolutePose;
     % Compute the current camera pose in the global coordinate system
     % relative to the first view.
@@ -151,7 +222,9 @@ for i = 2:numImages
     % Add the current view to the view set.
     vSet = addView(vSet, i, currPose, Points=points{i});
     % Store the point matches between the previous and the current views.
+
     vSet = addConnection(vSet, i-1, i, relPose, Matches=indexPairs(inlierIdx, :));
+    
     tracks = findTracks(vSet);  % Find point tracks across all views.
     % Get the table containing camera poses for all views.
     camPoses = poses(vSet);
@@ -163,12 +236,55 @@ for i = 2:numImages
     vSet = updateView(vSet, camPoses);
 end
 
-pointCloudInstance = logic.reconstruct3D.getColoredPointCloud(worldPoints, tracks, imagesOriginal);
+figure;
+plotCamera(camPoses, Size=0.2);
+
+figure;
+plotCamera(camPoses, Size=0.2);
+hold on;
+pointCloudColored = logic.reconstruct3D.getColoredPointCloud(worldPoints, tracks, imagesOriginal);
+pcshow(pointCloudColored, 'VerticalAxis', 'y', 'VerticalAxisDir', 'down', 'MarkerSize', 45);
+
+if i == 34
+    if log
+        fprintf('Loop closure detected between images %d and %d\n', 1, i);
+    end
+    indexPairs = matchFeatures(features{1}, features{i}, 'Unique', true);
+    matchedPointsPrev = points{1}(indexPairs(:, 1));
+    matchedPointsCurr = points{i}(indexPairs(:, 2));
+    [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
+                                                                              eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
+    prevPose = poses(vSet, 1).AbsolutePose;
+    currPose = rigidtform3d(prevPose.A * relPose.A);
+    vSet = addConnection(vSet, 1, i, Matches=indexPairs(inlierIdx, :));
+    vSet = optimizePoses(vSet);
+
+    tracks = findTracks(vSet);  % Find point tracks across all views.
+    % Get the table containing camera poses for all views.
+    camPoses = poses(vSet);
+
+    % Triangulate initial locations for the 3-D world points and do bundle adjustment.
+    [worldPoints, camPoses, tracks] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
+                                                                                        maxReprojectionError=maxReprojectionError);
+    % Store the refined camera poses.
+    vSet = updateView(vSet, camPoses);
+end
+figure;
+plotCamera(camPoses, Size=0.2);
+figure;
+plotCamera(camPoses, Size=0.2);
+hold on;
+pointCloudColored = logic.reconstruct3D.getColoredPointCloud(worldPoints, tracks, imagesOriginal);
+pcshow(pointCloudColored, 'VerticalAxis', 'y', 'VerticalAxisDir', 'down', 'MarkerSize', 45);
+
+if log
+    fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
+end
 
 % Rotate the point cloud
 R = [1 0 0; 0 0 1; 0 -1 0];
 tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
-[pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
+[pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudColored, camPoses, tform);
 
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
