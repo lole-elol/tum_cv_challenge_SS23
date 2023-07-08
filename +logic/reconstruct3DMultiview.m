@@ -78,8 +78,11 @@ end
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, size(images{1}));
 
 % Presort images
-fprintf('Presorting images\n');
-images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+%fprintf('Presorting images\n');
+%images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+% Calculate Similarity Matrix
+[~, similarityMatrix] = logic.similarity(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
+
 
 if log
     fprintf('\nPreprocessing finished in %f seconds.\n', toc);
@@ -114,52 +117,108 @@ end
 if log
     fprintf("Generating view set\n");
 end
-% Create an empty imageviewset object to manage the data associated with each view.
-% Add the first view. Place the camera associated with the first view and the origin, oriented along the Z-axis.
-vSet = imageviewset;
-vSet = addView(vSet, 1, rigidtform3d, Points=points{1});
+
+imgPoses = cell(numImages, 1);
+inlierIndices = cell(numImages, 1);
+indexPairs = cell(numImages, 1);
+connectionTree = zeros(numImages, numImages);
 
 for i = 2:numImages
     if log
         fprintf('Matching points of image %d of %d and triangulation with previous images. \r', i, numImages);
     end
-    % Match the features between the previous and the current image.
-    indexPairs   = matchFeatures(features{i-1}, features{i}, 'Unique', true);
-    matchedPointsPrev = points{i-1}(indexPairs(:, 1));
-    matchedPointsCurr = points{i}(indexPairs(:, 2));
 
-    % Estimate the camera pose of current view relative to the previous view.
-    % The pose is computed up to scale, meaning that the distance between
-    % the cameras in the previous view and the current view is set to 1.
-    % This will be corrected by the bundle adjustment.
-    [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
-                                                                              eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
+    status = 1;
+    while status ~= 0
+        nearestIdx = logic.kNearestNeighbour(similarityMatrix(i-1,:), 1);
+        similarityMatrix(i-1, nearestIdx) = inf;
+        similarityMatrix(nearestIdx, i-1) = inf;
 
-    
-                                                                              % Get the table containing the previous camera pose.
-    prevPose = poses(vSet, i-1).AbsolutePose;
-    % Compute the current camera pose in the global coordinate system
-    % relative to the first view.
-    if length(relPose) > 1  % TODO: BUG sometimes two poses are returned. This is a workaround.
-        size(relPose)
-        relPose = relPose(1);
+        if log
+            fprintf('Matching points of image %d and %d \r', i-1, nearestIdx);
+        end
+
+        % Match the features between the previous and the current image.
+        indexPairsTmp   = matchFeatures(features{i-1}, features{nearestIdx}, 'Unique', true);
+        matchedPointsPrev = points{i-1}(indexPairsTmp(:, 1));
+        matchedPointsCurr = points{nearestIdx}(indexPairsTmp(:, 2));
+        indexPairs{i-1} = indexPairsTmp;
+
+        % Estimate the camera pose of current view relative to the previous view.
+        % The pose is computed up to scale, meaning that the distance between
+        % the cameras in the previous view and the current view is set to 1.
+        % This will be corrected by the bundle adjustment.
+        [~, imgPoses{i-1}, status, inlierIndices{i-1}] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
+                                                                                eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
     end
-    currPose = rigidtform3d(prevPose.A * relPose.A);
 
-    % Add the current view to the view set.
-    vSet = addView(vSet, i, currPose, Points=points{i});
-    % Store the point matches between the previous and the current views.
-    vSet = addConnection(vSet, i-1, i, relPose, Matches=indexPairs(inlierIdx, :));
-    tracks = findTracks(vSet);  % Find point tracks across all views.
-    % Get the table containing camera poses for all views.
-    camPoses = poses(vSet);
+    connectionTree(i-1, nearestIdx) = 1;
+    connectionTree(nearestIdx, i-1) = -1;
+end
 
-    % Triangulate initial locations for the 3-D world points and do bundle adjustment.
-    [pointCloudInstance, camPoses] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
-                                                                                        maxReprojectionError=maxReprojectionError);
+% Create an empty imageviewset object to manage the data associated with each view.
+% Add the first view. Place the camera associated with the first view and the origin, oriented along the Z-axis.
+vSet = imageviewset;
+vSet = addView(vSet, 1, rigidtform3d, Points=points{1});
 
-    % Store the refined camera poses.
-    vSet = updateView(vSet, camPoses);
+row = 1;
+
+while ~isempty(row)
+    nextRow = [];
+
+    for root=row
+        % Find the leafs for the next iteration.
+        connectionRow = connectionTree(root, :);
+        leafs = find(connectionRow ~= 0);
+
+        if isempty(leafs)
+            continue
+        end
+
+        nextRow = [nextRow, leafs];
+
+        for leaf=leafs
+            if connectionRow(leaf) == -1
+                relPose = invert(imgPoses{leaf});
+                inlierIdx = inlierIndices{leaf};
+                indexPairsTmp = indexPairs{leaf};
+            else
+                relPose = imgPoses{root};
+                inlierIdx = inlierIndices{root};
+                indexPairsTmp = indexPairs{root};
+            end
+
+
+            % Get the table containing the previous camera pose.
+            prevPose = poses(vSet, root).AbsolutePose;
+            % Compute the current camera pose in the global coordinate system
+            % relative to the first view.
+            if length(relPose) > 1  % TODO: BUG sometimes two poses are returned. This is a workaround.
+                size(relPose)
+                relPose = relPose(1);
+            end
+            currPose = rigidtform3d(prevPose.A * relPose.A);
+
+            % Add the current view to the view set.
+            vSet = addView(vSet, leaf, currPose, Points=points{leaf});
+            % Store the point matches between the previous and the current views.
+            vSet = addConnection(vSet, root, leaf, relPose, Matches=indexPairsTmp(inlierIdx, :));
+            tracks = findTracks(vSet);  % Find point tracks across all views.
+            % Get the table containing camera poses for all views.
+            camPoses = poses(vSet);
+
+            % Triangulate initial locations for the 3-D world points and do bundle adjustment.
+            [pointCloudInstance, camPoses] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
+                                                                                                maxReprojectionError=maxReprojectionError);
+
+            % Store the refined camera poses.
+            vSet = updateView(vSet, camPoses);
+        end
+
+        connectionTree(:, root) = 0;
+    end
+
+    row = nextRow;
 end
 % We will use this to filter out points that are too far away.
 % after doing dense reconstruction.
