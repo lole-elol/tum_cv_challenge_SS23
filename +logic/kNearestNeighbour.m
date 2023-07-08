@@ -1,24 +1,17 @@
-function [element, idx] = kNearestNeighbour(features, startIdx, k)
+function [idx, element] = kNearestNeighbour(similarity, k)
 % KNEARESTNEIGHBOUR - Get the kth nearest neighbour of a element in a feature vector
 %
 % Inputs:
-%    features: A matrix of n features with m dimensions (m x n)
+%    similarity: A vector of similarity values between the element at startIdx and all other elements
 %    startIdx: The index of the element to find the kth nearest neighbour of
 %    k: The kth nearest neighbour to find
 %
 % Outputs:
-%   element: The kth nearest neighbour of the element at startIdx
 %   idx: The index of the kth nearest neighbour
+%   element: The kth nearest neighbour of the element at startIdx
 
-remaining = features(:, ~ismember(1:size(features, 2), startIdx));
+[dist, indices] = mink(similarity, k+1);
 
-indices = 1:size(features, 2);
-remainingIdx = indices(~ismember(1:size(features, 2), startIdx));
-
-distances = remaining - features(:, startIdx);
-[~, indices] = mink(vecnorm(distances), k);
-
-idx = remainingIdx(indices(end));
-element = features(:, idx);
-
+element = dist(k+1);
+idx = indices(k+1);
 end
