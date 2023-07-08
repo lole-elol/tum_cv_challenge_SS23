@@ -1,4 +1,4 @@
-function [pointCloudInstance, camPoses, vSet, tracks, maxZ] = reconstruct3DMultiview(images, cameraParams, varargin)
+function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images, cameraParams, varargin)
 % RECONSTRUCT3DMULTIVIEW Reconstructs a 3D point cloud from multiple images
 % Input:
 %   images - a cell array of images
@@ -164,10 +164,6 @@ for i = 2:numImages
 end
 
 pointCloudInstance = logic.reconstruct3D.getColoredPointCloud(worldPoints, tracks, imagesOriginal);
-
-% We will use this to filter out points that are too far away.
-% after doing dense reconstruction.
-maxZ = max(pointCloudInstance.Location(:, 3));
 
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);
