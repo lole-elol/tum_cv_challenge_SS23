@@ -1,4 +1,4 @@
-function [pointCloudInstance, camPoses] = getTriangulatedPointsMultiView(tracks, camPoses, camera_params, varargin)
+function [worldPoints, camPoses, tracks] = getTriangulatedPointsMultiView(tracks, camPoses, camera_params, varargin)
     % Get the 3D points from the matched points and the relative pose of thr two cameras
     % Compute the 3D points from the camera pose
     p = inputParser;
@@ -15,9 +15,5 @@ function [pointCloudInstance, camPoses] = getTriangulatedPointsMultiView(tracks,
     % remove points with high reprojection error
     valid_index = valid_index & (reprojectionErrors < maxReprojectionError);
     worldPoints = worldPoints(valid_index, :);
-    
-    % TODO: color the points based on the image
-    maxZ = max(worldPoints(:, 3));
-    color = repmat([0.5, 0.5, 0.5], size(worldPoints, 1), 1);
-    pointCloudInstance = pointCloud(worldPoints, Color=color);
+    tracks = tracks(valid_index);
 end

@@ -29,7 +29,7 @@ addRequired(p, 'camPoses', @isobject);
 addRequired(p, 'vSet', @isobject);
 addRequired(p, 'cameraParams', @isobject);
 addOptional(p, 'log', true, @islogical);
-addOptional(p, 'scalingFactor', 1.0, @isnumeric);
+addOptional(p, 'scalingFactor', 0.25, @isnumeric);
 addOptional(p, 'numImages', Inf, @isnumeric);
 addOptional(p, 'maxZ', 1.5, @isnumeric);
 parse(p, pointCloudInstance, images, camPoses, vSet, cameraParams, varargin{:});
@@ -61,11 +61,13 @@ for i = 1:(numImages-1)
     end
     image1 = images{i};
     image2 = images{i+1};
+    A1 = poses(vSet, i).AbsolutePose.A;
+    A2 = poses(vSet, i+1).AbsolutePose.A;
     % figure
     % imshowpair(image1, image2, 'montage');
 
     % Compute stereo parameters and rectify the stereo images.
-    relPose = rigidtform3d(poses(vSet, i).AbsolutePose.A \ poses(vSet, i+1).AbsolutePose.A);
+    relPose = rigidtform3d(A2);
     stereoParams = stereoParameters(cameraParams, cameraParams, relPose);
     %[image1Rect, image2Rect] = rectifyStereoImages(rgb2gray(image1), rgb2gray(image2), stereoParams);
     [image1Rect, image2Rect, ~, camMatrix1] = rectifyStereoImages(image1, image2, stereoParams);
@@ -74,7 +76,7 @@ for i = 1:(numImages-1)
 
     % Compute disparity.
     disparityRange = [0 128];
-    disparityMap = disparitySGM(rgb2gray(image1Rect), rgb2gray(image2Rect), DisparityRange=disparityRange);
+    disparityMap = disparityBM(rgb2gray(image1Rect), rgb2gray(image2Rect), DisparityRange=disparityRange);
     % figure
     % imshow(disparityMap, disparityRange);
     % colormap jet
@@ -85,13 +87,13 @@ for i = 1:(numImages-1)
     xyzPoints = reconstructScene(disparityMap, stereoParams);
 
     % Filter points that are too far away and transform the MxNx3 matrix into a Nx3 matrix
-    roiBorder = 50;  % TODO: make this a parameter
+    roiBorder = 20;  % TODO: make this a parameter
     roi = zeros(size(disparityMap));
     roi(roiBorder:end-roiBorder, roiBorder:end-roiBorder) = 1;
     xyzPoints = reshape(xyzPoints, [], 3);
     roi = reshape(roi, [], 1);
     % validIdx = xyzPoints(:, 3) < 1.5*maxZ & xyzPoints(:, 3) > 0.5*minZ & roi;
-    validIdx = xyzPoints(:, 3) < maxZ & roi;
+    validIdx = logical(roi) & xyzPoints(:, 3) < 1.5*maxZ;
     xyzPoints = xyzPoints(validIdx, :);
     xyzPointsInImage1 = (camMatrix1 * [xyzPoints, ones(size(xyzPoints, 1), 1)]')';
     xyzPointsInImage1 = floor(xyzPointsInImage1(:, 2:-1:1) ./ xyzPointsInImage1(:, 3));
