@@ -73,7 +73,7 @@ progressdlgMaxFeatureExtraction = progressdlgMax * 0.4;
 progressdlgMaxMatchingTriangulation = progressdlgMax * 0.4;
 
 tic;
-if progressdlg
+if ~isempty(progressdlg)
     progressdlg.Value = 0;
     progressdlg.Message = 'Preprocessing images';
 end
@@ -83,7 +83,7 @@ end
 %% === 1. Preprocessing ===
 imagesOriginal = cell(1, numImages);
 for i = 1:numImages
-    if progressdlg
+    if ~isempty(progressdlg)
         progressdlg.Message = sprintf('Preprocessing image %d of %d', i, numImages);
         progressdlg.Value = (i-1)/numImages * progressdlgMaxPreprocessing;
     end
@@ -100,7 +100,7 @@ cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFa
 % Presort images
 %fprintf('Presorting images\n');
 %images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
-if progressdlg
+if ~isempty(progressdlg)
     progressdlg.Message = 'Computing similarity matrix';
     progressdlg.Value = progressdlgMaxPreprocessing;
 end
@@ -121,7 +121,7 @@ end
 % array. This is done to avoid recomputing the features when matching the
 % images.
 tic;
-if progressdlg
+if ~isempty(progressdlg)
     progressdlg.Message = 'Extracting features';
     progressdlg.Value = progressdlgMaxPreprocessing;
 end
@@ -131,7 +131,7 @@ end
 features = cell(numImages, 1);
 points = cell(numImages, 1);
 for i = 1:numImages
-    if progressdlg
+    if ~isempty(progressdlg)
         progressdlg.Message = sprintf('Extracting features of image %d of %d', i, numImages);
         progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction * (i-1)/numImages * progressdlgMax;
     end
@@ -143,7 +143,7 @@ for i = 1:numImages
                                                                    method=featureExtractionMethod, ...
                                                                    numOctaves=numOctaves, roiBorder=roiBorder);
 end
-if progressdlg
+if ~isempty(progressdlg)
     progressdlg.Message = sprintf('Feature extraction finished in %f seconds', toc);
     progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction;
 end
@@ -167,7 +167,7 @@ similarityMatrix(:, prevIdx) = inf;
 
 tic;
 for i=2:numImages
-    if progressdlg
+    if ~isempty(progressdlg)
         progressdlg.Message = sprintf('Matching points of image %d of %d and triangulation with previous images', i, numImages);
         progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction + progressdlgMaxMatchingTriangulation * (i-1)/numImages * progressdlgMax;
     end
@@ -261,7 +261,7 @@ R = [1 0 0; 0 0 1; 0 -1 0];
 tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
 [pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
 
-if progressdlg
+if ~isempty(progressdlg)
     progressdlg.Message = sprintf('Triangulation finished after %.2f seconds', toc);
     progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction + progressdlgMaxMatchingTriangulation;
 end

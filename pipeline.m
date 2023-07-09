@@ -14,9 +14,8 @@ function [models, pc] = pipeline(images, camParams, roomHeigth,progress)
 load("config/paramsV1.mat");
 progress.Value = 0; 
 progress.Message = 'Reconstructing 3D model';
-% reconstruct 3D point cloud from images
-[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction,progressdlg = progress);
-
+% reconstruct 3D point cloud from imagess
+[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction, progressdlg=progress);
 progress.Value = 0.33; 
 progress.Message = 'Filtering';
 %% Remove outliers
