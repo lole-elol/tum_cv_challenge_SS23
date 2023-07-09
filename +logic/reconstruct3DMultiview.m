@@ -107,7 +107,7 @@ end
 fprintf('Computing similarity matrix\n')
 imagesLowRes = cellfun(@(x) im2gray(imresize(x, 0.1)), imagesOriginal, 'UniformOutput', false);
 [~, similarityMatrix] = logic.similarity(imagesLowRes, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
-if progressdlg
+if ~isempty(progressdlg)
     progressdlg.Message = sprintf('Preprocessing finished in %f seconds', toc);
     progressdlg.Value = progressdlgMaxPreprocessing;
 end
@@ -133,7 +133,7 @@ points = cell(numImages, 1);
 for i = 1:numImages
     if ~isempty(progressdlg)
         progressdlg.Message = sprintf('Extracting features of image %d of %d', i, numImages);
-        progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction * (i-1)/numImages * progressdlgMax;
+        progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction * (i-1)/numImages;
     end
     if log
         fprintf('Extracting features of image %d of %d\r', i, numImages);
