@@ -1,13 +1,14 @@
-function [models, pc] = pipeline(images, camParams, roomHeigth)
+function [models, pc, scalingFactor] = pipeline(images, camParams, roomHeigth)
 % PIPELINE main function of the pipeline triggered by the GUI
 % perforem teh computation of the 3D point cloud and the detection of the models
 % input:
 %   images: cell array of images
 %   camParams: camera parameters
-%   scalingFactor: scaling factor for the point cloud
+%   roomHeigth: room height in an arbitrary distance unit
 % output:
 %   models: cell array of detected models
 %   pc: point cloud
+%   scalingFactor: scaling factor of the point cloud
 
 
 %% load hyper parameters
@@ -27,7 +28,7 @@ pc = logic.pointcloud.filter(pointCloudInstance, detection.outlierDist);
 pc = logic.pointcloud.align(pc);
 
 % Detect floor and ceiling
-[~, ~, ~, floorPlane] = logic.pointcloud.groundPlane(pc);
+[~, ~, ~, floorPlane] = logic.pointcloud.groundPlane(pc, maxDistance=detection.floorDist);
 
 % Rotate point cloud so that floor is horizontal
 pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
@@ -36,10 +37,13 @@ pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
 [ceilingPlane, ~, ~] = logic.pointcloud.ceilPlane(pc, maxDistance=detection.ceilingDist, percentage=detection.ceilingPercentile, refVector=floorPlane.Normal, windowSize=detection.ceilingWindowSize);
 
 % calculate scaling factor
-scalingFactor = logic.pointcloud.scalingFactorFromRoomHeight(floorPlane, ceilingPlane, roomHeigth);
+scalingFactor = logic.pointcloud.scalingFactorFromRoomHeight(ceilingPlane, floorPlane, roomHeigth);
+
+% Scale point cloud
+%pc = logic.pointcloud.scale(pc, scalingFactor);
 
 %% ================== Model Detection ==================
 disp("===== Model Detection =====");
-[models, ~, ~] = logic.modelDetection(pc, detection, scalingFactor=scalingFactor, preprocess=false);
+[models, ~, ~] = logic.modelDetection(pc, detection, scalingFactor=1, preprocess=false);
 
 end
