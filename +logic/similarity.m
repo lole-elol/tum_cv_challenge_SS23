@@ -2,7 +2,7 @@ function [features, similarity] = similarity(images, varargin)
 %SIMILARITY Compute similarity between images
 %
 % Inputs:
-%   images: cell array of images
+%   images: cell array of images (Must have the dimensions 1xN)
 %   featureLength = 1: length of feature vector
 %   featureType = 'HIST': Type of similarity algorithm to use. Options are: FFT2, HIST, PCA
 %   normalize = true: Wether to normalize the pca analyzed matrix
@@ -58,14 +58,14 @@ if lazy
   n = length(images);
   win = gausswin(2*n);
 
-  wheights = win(1:n);
-  wheights(1) = wheights(1)/2;
+  weights = win(1:n);
+  weights(1) = weights(1)/2;
   %wheights = wheights / sum(wheights);
 
-  wheightMat = toeplitz(wheights, [wheights(1), zeros(1, n-1)]);
-  wheightMat = wheightMat + wheightMat';
+  weightMat = toeplitz(wheights, [weights(1), zeros(1, n-1)]);
+  weightMat = weightMat + weightMat';
 
-  similarity = similarity .* wheightMat;
+  similarity = similarity .* weightMat;
 end
 
 end

@@ -65,7 +65,7 @@ if log
     fprintf('Starting preprocessing\n');
 end
 %% === 1. Preprocessing ===
-imagesOriginal = cell(numImages, 1);
+imagesOriginal = cell(1, numImages);
 for i = 1:numImages
     if log
         fprintf('Analyzing image %d of %d\r', i, numImages);
