@@ -40,7 +40,6 @@ p.addOptional('eValidPointFraction', 0.8);
 p.addOptional('maxReprojectionError', 20);
 % Presorting parameters
 p.addOptional('presort', 'FFT2');
-p.addOptional('presortNearestNeighbors', true);
 p.addOptional('presortFeatures', 1);
 p.addOptional('presortNormalize', true);
 
@@ -56,7 +55,6 @@ eMaxNumTrials = p.Results.eMaxNumTrials;
 eValidPointFraction = p.Results.eValidPointFraction;
 maxReprojectionError = p.Results.maxReprojectionError;
 presort = p.Results.presort;
-presortNearestNeighbors = p.Results.presortNearestNeighbors;
 presortFeatures = p.Results.presortFeatures;
 presortNormalize = p.Results.presortNormalize;
 % =========================
