@@ -21,6 +21,6 @@ outlier_rows = any(abs(z_scores) > relativeMaxDist, 2);
 inliers = points(~outlier_rows, :);
 
 % Create a point cloud containing only the inliers
-pc = pointCloud(inliers);
+pc = pointCloud(inliers, Color=pc.Color(~outlier_rows, :));
 
 end
