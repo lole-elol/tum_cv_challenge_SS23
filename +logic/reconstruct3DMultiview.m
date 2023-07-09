@@ -184,7 +184,6 @@ for i=2:numImages
     % Compute the current camera pose in the global coordinate system
     % relative to the first view.
     if length(relPose) > 1  % TODO: BUG sometimes two poses are returned. This is a workaround.
-        size(relPose);
         relPose = relPose(1);
     end
     currPose = rigidtform3d(prevPose.A * relPose.A);
