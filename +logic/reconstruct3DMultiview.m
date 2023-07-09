@@ -34,7 +34,7 @@ p.addOptional('roiBorder', 2);
 % Epipolar geometry parameters
 p.addOptional('eMaxDistance', 5);
 p.addOptional('eConfidence', 99.6);
-p.addOptional('eMaxNumTrials', 100000);
+p.addOptional('eMaxNumTrials', 5000);
 p.addOptional('eValidPointFraction', 0.8);
 % Triangulation parameters
 p.addOptional('maxReprojectionError', 20);
@@ -82,7 +82,9 @@ cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFa
 % Presort images
 %fprintf('Presorting images\n');
 %images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
-[~, similarityMatrix] = logic.similarity(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
+fprintf('Computing similarity matrix\n')
+imagesLowRes = cellfun(@(x) im2gray(imresize(x, 0.1)), imagesOriginal, 'UniformOutput', false);
+[~, similarityMatrix] = logic.similarity(imagesLowRes, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
 
 if log
     fprintf('\nPreprocessing finished in %f seconds.\n', toc);
@@ -127,21 +129,39 @@ similarityMatrix(:, prevIdx) = inf;
 
 for i=2:numImages
     if log
-        fprintf('Matching points of image %d of %d and triangulation with previous images. - ID: %d \r', i, numImages, prevIdx);
+        fprintf('Matching points of image %d of %d and triangulation with previous images. \n', i, numImages);
     end
 
     k = 0;
     status = 1;
     while status ~= 0
-        % Find the best match between the previous and the current image.
+        % Find the best match between for previous image.
 
-        if k == 0
+        if k == 0 && prevIdx + 1 < numImages && similarityMatrix(prevIdx, prevIdx+1) ~= inf
+            % Try to match the next image
             currIdx = prevIdx + 1;
         else
-            currIdx = logic.kNearestNeighbour(similarityMatrix(prevIdx, :), k);
+            if k == 0
+                k = 1;
+            end
+
+            % Find the most similar image
+            currIdxTmp = logic.kNearestNeighbour(similarityMatrix(prevIdx, :), k);
+
+            % If there are no more images to match use the previous result
+            if similarityMatrix(prevIdx, currIdxTmp) == inf
+                if log
+                    fprintf('No more images to match\n');
+                end
+                break;
+            end
+
+            currIdx = currIdxTmp;
         end
 
-        %similarityMatrix(currIdx, :) = inf;
+        if log
+            fprintf('Matching image %d to %d\n', prevIdx, currIdx);
+        end
 
         % Match the features between the previous and the current image.
         indexPairs   = matchFeatures(features{prevIdx}, features{currIdx}, 'Unique', true);
@@ -155,10 +175,10 @@ for i=2:numImages
         [E, relPose, status, inlierIdx] = logic.reconstruct3D.getEpipolarGeometry(matchedPointsPrev, matchedPointsCurr, cameraParams, ...
                                                                                 eMaxDistance=eMaxDistance, eConfidence=eConfidence, eMaxNumTrials=eMaxNumTrials, eValidPointFraction=eValidPointFraction);
 
-        disp(status)
         k = k + 1;
     end
 
+    % Update the similarity matrix
     similarityMatrix(:, prevIdx) = inf;
 
      % Get the table containing the previous camera pose.
@@ -171,21 +191,25 @@ for i=2:numImages
     end
     currPose = rigidtform3d(prevPose.A * relPose.A);
 
-    % Add the current view to the view set.
-    vSet = addView(vSet, currIdx, currPose, Points=points{currIdx});
-    % Store the point matches between the previous and the current views.
-    vSet = addConnection(vSet, prevIdx, currIdx, relPose, Matches=indexPairs(inlierIdx, :));
-    tracks = findTracks(vSet);  % Find point tracks across all views.
-    % Get the table containing camera poses for all views.
-    camPoses = poses(vSet);
+    try
+        % Add the current view to the view set.
+        vSet = addView(vSet, currIdx, currPose, Points=points{currIdx});
+        % Store the point matches between the previous and the current views.
+        vSet = addConnection(vSet, prevIdx, currIdx, relPose, Matches=indexPairs(inlierIdx, :));
+        tracks = findTracks(vSet);  % Find point tracks across all views.
+        % Get the table containing camera poses for all views.
+        camPoses = poses(vSet);
 
-    % Triangulate initial locations for the 3-D world points and do bundle adjustment.
-    [worldPoints, camPoses, tracks] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
-                                                                                        maxReprojectionError=maxReprojectionError);
-    % Store the refined camera poses.
-    vSet = updateView(vSet, camPoses);
+        % Triangulate initial locations for the 3-D world points and do bundle adjustment.
+        [worldPoints, camPoses, tracks] = logic.reconstruct3D.getTriangulatedPointsMultiView(tracks, camPoses, cameraParams, ...
+                                                                                            maxReprojectionError=maxReprojectionError);
+        % Store the refined camera poses.
+        vSet = updateView(vSet, camPoses);
 
-    prevIdx = currIdx;
+        prevIdx = currIdx;
+    catch
+        fprintf('Error triangulating points. Skipping image %d\n', currIdx);
+    end
 end
 
 pointCloudInstance = logic.reconstruct3D.getColoredPointCloud(worldPoints, tracks, imagesOriginal);
