@@ -62,7 +62,7 @@ if lazy
   weights(1) = weights(1)/2;
   %wheights = wheights / sum(wheights);
 
-  weightMat = toeplitz(wheights, [weights(1), zeros(1, n-1)]);
+  weightMat = toeplitz(weights, [weights(1), zeros(1, n-1)]);
   weightMat = weightMat + weightMat';
 
   similarity = similarity .* weightMat;
