@@ -1,4 +1,4 @@
-function [groundPtsIdx,remainingPtCloud, groundPlanePtCloud, geoGroundPlane] = groundPlane(ptCloud)
+function [groundPtsIdx, remainingPtCloud, groundPlanePtCloud, geoGroundPlane] = groundPlane(ptCloud)
 % GROUNDPLANE Find the ground plane in a point cloud
 %Input:
 %   ptCloud: point cloud

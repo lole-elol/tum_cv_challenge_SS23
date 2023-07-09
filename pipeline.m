@@ -10,36 +10,36 @@ function [models, pc] = pipeline(images, camParams, roomHeigth)
 %   pc: point cloud
 
 
-% load hyper parameters
+%% load hyper parameters
 load("config/paramsV1.mat");
 
-% reconstruct 3D point cloud from images
+%% ================== 3D Reconstruction ==================
+disp("===== 3D Reconstruction =====");
 [pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction);
 
+%% ================= Point Cloud Scaling ==================
+disp("===== Point Cloud Scaling =====");
 
-%% Remove outliers
+% Remove outliers
 pc = logic.pointcloud.filter(pointCloudInstance, detection.outlierDist);
 
-%% Detect floor and ceiling
-[~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc);
-pc = removeInvalidPoints(pc);
+% Align point cloud
+pc = logic.pointcloud.align(pc);
+
+% Detect floor and ceiling
+[~, ~, ~, floorPlane] = logic.pointcloud.groundPlane(pc);
 
 % Rotate point cloud so that floor is horizontal
 pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
 
-[ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=detection.ceilingDist, percentage=detection.ceilingPercentile, refVector=floorPlane.Normal, windowSize= detection.ceilingWindowSize);
+% Detect ceiling
+[ceilingPlane, ~, ~] = logic.pointcloud.ceilPlane(pc, maxDistance=detection.ceilingDist, percentage=detection.ceilingPercentile, refVector=floorPlane.Normal, windowSize=detection.ceilingWindowSize);
 
 % calculate scaling factor
 scalingFactor = logic.pointcloud.scalingFactorFromRoomHeight(floorPlane, ceilingPlane, roomHeigth);
 
-% scale point cloud via scaling factor
-tScaling = affinetform3d([scalingFactor, 0, 0, 0; 0, scalingFactor, 0, 0; 0, 0, scalingFactor, 0; 0, 0, 0, 1]);
-pc = pctransform(pointCloudInstance, tScaling);
-
-
-
-% detect models planes and Cuboids
-[models, pc, ~] = logic.modelDetection(pc, detection);
-
+%% ================== Model Detection ==================
+disp("===== Model Detection =====");
+[models, ~, ~] = logic.modelDetection(pc, detection, scalingFactor=scalingFactor, preprocess=false);
 
 end

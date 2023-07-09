@@ -14,6 +14,8 @@ function [models, pc, pcRemaining] = modelDetection(pc, varargin)
 %   cuboidVolume = 0.1: Minimum volume of a cuboid
 %   cuboidInlier = 3: Minimum percentage of inlier cuboids by volume in standard deviations
 %   cuboidOverlap = 0.9: Percentage of points inside cuboid to consider it overlapping
+%   scalingFactor = 1: Scaling factor for point cloud
+%   preprocess = true: Whether to preprocess the point cloud (remove outliers, align)
 %
 % Outputs:
 %   models: Cell array of detected models (floor, ceiling, cuboids)
@@ -37,6 +39,8 @@ p.addParameter('ceilingWindowSize', 5, validatePosScalar);
 p.addParameter('cuboidVolume', 0.1, validatePosScalar);
 p.addParameter('cuboidInlier', 3, validatePosScalar);
 p.addParameter('cuboidOverlap', 0.9, validatePercentile);
+p.addParameter('scalingFactor', 1, validatePosScalar);
+p.addParameter('preprocess', true, @islogical);
 p.parse(varargin{:});
 
 outlierDist = p.Results.outlierDist;
@@ -50,9 +54,20 @@ ceilingWindowSize = p.Results.ceilingWindowSize;
 cuboidVolume = p.Results.cuboidVolume;
 cuboidInlier = p.Results.cuboidInlier;
 cuboidOverlap = p.Results.cuboidOverlap;
+scalingFactor = p.Results.scalingFactor;
+preprocess = p.Results.preprocess;
 
-%% Remove outliers
-% pc = logic.pointcloud.filter(pc, outlierDist);
+
+if preprocess
+    %% Remove outliers
+    pc = logic.pointcloud.filter(pc, outlierDist);
+
+    %% Align point cloud
+    pc = logic.pointcloud.align(pc);
+end
+
+%% Scale point cloud
+pc = logic.pointcloud.scale(pc, scalingFactor);
 
 %% Detect floor and ceiling
 [~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc);
