@@ -14,7 +14,7 @@ function [models, pc] = pipeline(images, camParams, roomHeigth)
 load("config/paramsV1.mat");
 
 % reconstruct 3D point cloud from images
-[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction);
+[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction, progressdlg=progress);
 
 
 %% Remove outliers
