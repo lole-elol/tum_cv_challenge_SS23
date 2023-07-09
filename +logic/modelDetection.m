@@ -56,13 +56,14 @@ cuboidOverlap = p.Results.cuboidOverlap;
 
 %% Detect floor and ceiling
 [~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc);
+disp('removing invalid points')
 pc = removeInvalidPoints(pc);
-
+disp('rotating cloud')
 % Rotate point cloud so that floor is horizontal
 pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
-
+disp('fit the ceiling')
 [ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=ceilingDist, percentage=ceilingPercentile, refVector=floorPlane.Normal, windowSize=ceilingWindowSize);
-
+disp('detect cuboids')
 %% Detect cuboids
 [seg, ~, ~, pcSegRemaining] = logic.pointcloud.segmentation(pc, minDist=clusterDist, minP=clusterPercentile, denoise=true, denoiseNeighbours=clusterDenoiseNeighbours, denoiseThreshold=clusterDenoise);
 [cuboids, ~, segRemaining] = logic.pointcloud.fitCuboids(seg, cuboidVolume, minInliers=cuboidInlier, removeOverlapping=true, overlapThreshold=cuboidOverlap, mergeOverlapping=false);
@@ -80,5 +81,5 @@ models = {
     ceilingPlane;
     cuboids;
     };
-
+disp('finished models')
 end
