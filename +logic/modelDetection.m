@@ -52,7 +52,7 @@ cuboidInlier = p.Results.cuboidInlier;
 cuboidOverlap = p.Results.cuboidOverlap;
 
 %% Remove outliers
-pc = logic.pointcloud.filter(pc, outlierDist);
+% pc = logic.pointcloud.filter(pc, outlierDist);
 
 %% Detect floor and ceiling
 [~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc);
@@ -73,12 +73,12 @@ pcRemaining = {
     pcCeiling;
     pcSegRemaining;
     segRemaining;
-};
+    };
 
 models = {
     floorPlane;
     ceilingPlane;
     cuboids;
-};
+    };
 
 end

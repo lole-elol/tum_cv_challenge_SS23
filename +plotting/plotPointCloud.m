@@ -1,40 +1,39 @@
 function plotPointCloud(pointCloudInstance, camPoses, varargin)
-    % PLOTPOINTCLOUD Plot the point cloud with the camera poses
-    % Inputs:
-    %   pointCloudInstance: 3D point cloud as a pointCloud object
-    %   camPoses: camera poses as an array of rigid3d objects
-    %   cameraSizePlotSize = 1.0: size of the camera plot
-    %   pcMarkerSize = 45: size of the point cloud markers
-    % Outputs:
-    %   None
+% PLOTPOINTCLOUD Plot the point cloud with the camera poses
+% Inputs:
+%   pointCloudInstance: 3D point cloud as a pointCloud object
+%   camPoses: camera poses as an array of rigid3d objects
+%   usePcViewer = false: use the pcviewer function instead of pcshow
+%   cameraSizePlotSize = 1.0: size of the camera plot
+%   pcMarkerSize = 45: size of the point cloud markers
+% Outputs:
+%   None
 
-    % Define parser
-    p = inputParser;
-    p.addOptional('usePcViewer', false);
-    p.addOptional('cameraSizePlotSize', 1.0);
-    p.addOptional('pcMarkerSize', 45);
-    p.parse(varargin{:});
-    usePcViewer = p.Results.usePcViewer;
-    cameraSizePlotSize = p.Results.cameraSizePlotSize;
-    pcMarkerSize = p.Results.pcMarkerSize;
+% Define parser
+p = inputParser;
+p.addOptional('usePcViewer', false, @islogical);
+p.addOptional('cameraSizePlotSize', 0.2, @isnumeric);
+p.addOptional('pcMarkerSize', 45, @isnumeric);
+p.addOptional('pcViewerMarkerSize', 5, @isnumeric);
+p.parse(varargin{:});
+usePcViewer = p.Results.usePcViewer;
+cameraSizePlotSize = p.Results.cameraSizePlotSize;
+pcMarkerSize = p.Results.pcMarkerSize;
+pcViewerMarkerSize = p.Results.pcViewerMarkerSize;
 
-    figure;
+
+if usePcViewer
+    pcviewer(pointCloudInstance, PointSize=pcViewerMarkerSize);
+else
     hold on;
-
-    if usePcViewer
-        pcviewer(pointCloudInstance,VerticalAxis='YDown', PointSize=1);
-    else
-        pcshow(pointCloudInstance, VerticalAxis='Y', VerticalAxisDir='Down', MarkerSize=pcMarkerSize);
-        % Show cameras poses
-        for pose=1:numel(camPoses)
-            % Plot camera
-            plotCamera(Location=camPoses(pose).Translation, Orientation=camPoses(pose).R, ...
-                Size=cameraSizePlotSize, Color='b', Opacity=0);
-        end
-        xlabel('X');
-        ylabel('Y');
-        zlabel('Z');
+    pcshow(pointCloudInstance, VerticalAxisDir='Down', MarkerSize=pcMarkerSize);
+    % Show cameras poses
+    if ~isempty(camPoses)
+        plotCamera(camPoses, Size=cameraSizePlotSize);
     end
-    % Rotate and zoom the plot
-    camorbit(0, -30);
-    hold off;
+    xlabel('X');
+    ylabel('Y');
+    zlabel('Z');
+end
+camorbit(180,0, "data", [0, 1, 0])
+camorbit(180,0, "data", [0, 0, 1]) 
