@@ -17,6 +17,9 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 %   presortFeatures = 1: the length of the feature vector
 %   presortNormalize = true: whether to normalize the features before presorting
 %   presortLazy = true: whether to use lazy presorting
+%   progressdlg = []; a progress dialog object to update
+%   progressdlgMax = 0.6: the maximum value of the progress dialog
+%
 % Output:
 %   pointCloudInstance: a pointCloud object
 %   camPoses: a table containing the camera poses
@@ -43,7 +46,9 @@ p.addOptional('maxReprojectionError', 20);
 p.addOptional('presort', 'FFT2');
 p.addOptional('presortFeatures', 1);
 p.addOptional('presortNormalize', true);
-p.addOptional('presortLazy', true)
+% Progress dialog
+p.addOptional('progressdlg', []);
+p.addOptional('progressdlgMax', 0.6);
 
 p.parse(varargin{:});
 log = p.Results.log;
@@ -59,16 +64,30 @@ maxReprojectionError = p.Results.maxReprojectionError;
 presort = p.Results.presort;
 presortFeatures = p.Results.presortFeatures;
 presortNormalize = p.Results.presortNormalize;
+progressdlg = p.Results.progressdlg;
+progressdlgMax = p.Results.progressdlgMax;
 % =========================
 
 numImages = length(images);
+progressdlgMaxPreprocessing = progressdlgMax * 0.2;
+progressdlgMaxFeatureExtraction = progressdlgMax * 0.4;
+progressdlgMaxMatchingTriangulation = progressdlgMax * 0.4;
+
 tic;
+if ~isempty(progressdlg)
+    progressdlg.Value = 0;
+    progressdlg.Message = 'Preprocessing images';
+end
 if log
     fprintf('Starting preprocessing\n');
 end
 %% === 1. Preprocessing ===
 imagesOriginal = cell(1, numImages);
 for i = 1:numImages
+    if ~isempty(progressdlg)
+        progressdlg.Message = sprintf('Preprocessing image %d of %d', i, numImages);
+        progressdlg.Value = (i-1)/numImages * progressdlgMaxPreprocessing;
+    end
     if log
         fprintf('Analyzing image %d of %d\r', i, numImages);
     end
@@ -82,10 +101,17 @@ cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFa
 % Presort images
 %fprintf('Presorting images\n');
 %images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+if ~isempty(progressdlg)
+    progressdlg.Message = 'Computing similarity matrix';
+    progressdlg.Value = progressdlgMaxPreprocessing;
+end
 fprintf('Computing similarity matrix\n')
 imagesLowRes = cellfun(@(x) im2gray(imresize(x, 0.1)), imagesOriginal, 'UniformOutput', false);
 [~, similarityMatrix] = logic.similarity(imagesLowRes, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
-
+if ~isempty(progressdlg)
+    progressdlg.Message = sprintf('Preprocessing finished in %f seconds', toc);
+    progressdlg.Value = progressdlgMaxPreprocessing;
+end
 if log
     fprintf('\nPreprocessing finished in %f seconds.\n', toc);
 end
@@ -95,12 +121,21 @@ end
 % We first extract the features/points of all the images and save them on a cell
 % array. This is done to avoid recomputing the features when matching the
 % images.
+tic;
+if ~isempty(progressdlg)
+    progressdlg.Message = 'Extracting features';
+    progressdlg.Value = progressdlgMaxPreprocessing;
+end
 if log
     fprintf('Extracting features\n');
 end
 features = cell(numImages, 1);
 points = cell(numImages, 1);
 for i = 1:numImages
+    if ~isempty(progressdlg)
+        progressdlg.Message = sprintf('Extracting features of image %d of %d', i, numImages);
+        progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction * (i-1)/numImages;
+    end
     if log
         fprintf('Extracting features of image %d of %d\r', i, numImages);
     end
@@ -108,6 +143,10 @@ for i = 1:numImages
     [points{i}, features{i}] = logic.reconstruct3D.extractFeatures(currentImage, ...
                                                                    method=featureExtractionMethod, ...
                                                                    numOctaves=numOctaves, roiBorder=roiBorder);
+end
+if ~isempty(progressdlg)
+    progressdlg.Message = sprintf('Feature extraction finished in %f seconds', toc);
+    progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction;
 end
 if log
     fprintf('\nFeature extraction finished in %f seconds.\n', toc);
@@ -127,7 +166,12 @@ vSet = addView(vSet, 1, rigidtform3d, Points=points{1});
 prevIdx = 1;
 similarityMatrix(:, prevIdx) = inf;
 
+tic;
 for i=2:numImages
+    if ~isempty(progressdlg)
+        progressdlg.Message = sprintf('Matching points of image %d of %d and triangulation with previous images', i, numImages);
+        progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction + progressdlgMaxMatchingTriangulation * (i-1)/numImages * progressdlgMax;
+    end
     if log
         fprintf('Matching points of image %d of %d and triangulation with previous images. \n', i, numImages);
     end
@@ -217,6 +261,11 @@ pointCloudInstance = logic.reconstruct3D.getColoredPointCloud(worldPoints, track
 R = [1 0 0; 0 0 1; 0 -1 0];
 tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
 [pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
+
+if ~isempty(progressdlg)
+    progressdlg.Message = sprintf('Triangulation finished after %.2f seconds', toc);
+    progressdlg.Value = progressdlgMaxPreprocessing + progressdlgMaxFeatureExtraction + progressdlgMaxMatchingTriangulation;
+end
 
 if log
     fprintf('\n3D reconstruction finished after %.2f seconds.\n', toc);

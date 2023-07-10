@@ -74,13 +74,14 @@ if preprocess
 end
 
 %% Detect floor and ceiling
+
 [~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc, floorDist);
+
 pc = removeInvalidPoints(pc);
 
 
 % Rotate point cloud so that floor is horizontal
 pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
-
 [ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=ceilingDist, percentage=ceilingPercentile, refVector=floorPlane.Normal, windowSize=ceilingWindowSize);
 
 %% Remove points below floor and above ceiling
@@ -104,5 +105,4 @@ models = {
     ceilingPlane;
     cuboids;
     };
-
 end
