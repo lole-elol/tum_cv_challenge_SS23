@@ -12,7 +12,7 @@ function [models, pc, scalingFactor] = pipeline(images, camParams, roomHeigth)
 
 
 %% load hyper parameters
-load("config/paramsV1.mat");
+load("config/paramsV3.mat");
 
 %% ================== 3D Reconstruction ==================
 disp("===== 3D Reconstruction =====");
