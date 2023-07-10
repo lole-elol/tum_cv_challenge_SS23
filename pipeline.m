@@ -44,6 +44,6 @@ scalingFactor = logic.pointcloud.scalingFactorFromRoomHeight(ceilingPlane, floor
 
 %% ================== Model Detection ==================
 disp("===== Model Detection =====");
-[models, ~, ~] = logic.modelDetection(pc, detection, scalingFactor=1, preprocess=false);
+[models, ~, ~] = logic.modelDetection(pc, detection, preprocess=false);
 
 end
