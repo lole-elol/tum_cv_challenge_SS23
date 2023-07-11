@@ -12,31 +12,31 @@ function [models, pc, scalingFactor] = pipeline(images, camParams, roomHeigth,pr
 
 
 %% load hyper parameters
-load("config/paramsV1.mat");
+load("config/paramsV3.mat");
 
 %% ================== 3D Reconstruction ==================
 disp("===== 3D Reconstruction =====");
 
-progress.Value = 0; 
+progress.Value = 0;
 progress.Message = 'Reconstructing 3D model';
 % reconstruct 3D point cloud from imagess
-[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction, progressdlg=progress); 
+[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction, progressdlg=progress);
 
 
 %% ================= Point Cloud Scaling ==================
 disp("===== Point Cloud Scaling =====");
 
 % Remove outliers
-progress.Value = 0.61; 
+progress.Value = 0.61;
 progress.Message = 'Filtering point cloud';
 pc = logic.pointcloud.filter(pointCloudInstance, detection.outlierDist);
 % Align point cloud
-progress.Value = 0.62; 
+progress.Value = 0.62;
 progress.Message = 'Aligning point cloud';
 pc = logic.pointcloud.align(pc);
 
 % Detect floor and ceiling
-progress.Value = 0.65; 
+progress.Value = 0.65;
 progress.Message = 'Detecting ceiling and floor';
 [~, ~, ~, floorPlane] = logic.pointcloud.groundPlane(pc, maxDistance=detection.floorDist);
 
@@ -54,8 +54,8 @@ scalingFactor = logic.pointcloud.scalingFactorFromRoomHeight(ceilingPlane, floor
 
 %% ================== Model Detection ==================
 disp("===== Model Detection =====");
-progress.Value = 0.8; 
+progress.Value = 0.8;
 progress.Message = 'Model detection';
-[models, ~, ~] = logic.modelDetection(pc, detection, scalingFactor=1, preprocess=false);
-progress.Value = 1; 
+[models, ~, ~] = logic.modelDetection(pc, detection, preprocess=false);
+progress.Value = 1;
 end

@@ -78,9 +78,16 @@ end
 [~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc, floorDist);
 
 pc = removeInvalidPoints(pc);
+
+
 % Rotate point cloud so that floor is horizontal
 pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
 [ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=ceilingDist, percentage=ceilingPercentile, refVector=floorPlane.Normal, windowSize=ceilingWindowSize);
+
+%% Remove points below floor and above ceiling
+inlier = find(pc.Location(:, 3) > -floorPlane.Parameters(4) & pc.Location(:, 3) < -ceilingPlane.Parameters(4));
+pc = select(pc, inlier);
+
 %% Detect cuboids
 [seg, ~, ~, pcSegRemaining] = logic.pointcloud.segmentation(pc, minDist=clusterDist, minP=clusterPercentile, denoise=true, denoiseNeighbours=clusterDenoiseNeighbours, denoiseThreshold=clusterDenoise);
 [cuboids, ~, segRemaining] = logic.pointcloud.fitCuboids(seg, cuboidVolume, minInliers=cuboidInlier, removeOverlapping=true, overlapThreshold=cuboidOverlap, mergeOverlapping=false);
