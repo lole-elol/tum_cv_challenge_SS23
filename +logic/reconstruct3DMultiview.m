@@ -17,6 +17,7 @@ function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images,
 %   presortFeatures = 1: the length of the feature vector
 %   presortNormalize = true: whether to normalize the features before presorting
 %   presortLazy = true: whether to use lazy presorting
+%   maxHardOutlierDistance = 50: the maximum distance from the camera for a point to be considered a hard outlier
 %   progressdlg = []; a progress dialog object to update
 %   progressdlgMax = 0.6: the maximum value of the progress dialog
 %
@@ -46,6 +47,8 @@ p.addOptional('maxReprojectionError', 20);
 p.addOptional('presort', 'FFT2');
 p.addOptional('presortFeatures', 1);
 p.addOptional('presortNormalize', true);
+% Filtering parameters
+p.addOptional('maxHardOutlierDistance', 50);
 % Progress dialog
 p.addOptional('progressdlg', []);
 p.addOptional('progressdlgMax', 0.6);
@@ -64,6 +67,7 @@ maxReprojectionError = p.Results.maxReprojectionError;
 presort = p.Results.presort;
 presortFeatures = p.Results.presortFeatures;
 presortNormalize = p.Results.presortNormalize;
+maxHardOutlierDistance = p.Results.maxHardOutlierDistance;
 progressdlg = p.Results.progressdlg;
 progressdlgMax = p.Results.progressdlgMax;
 % =========================
@@ -260,6 +264,8 @@ pointCloudInstance = logic.reconstruct3D.getColoredPointCloud(worldPoints, track
 R = [1 0 0; 0 0 1; 0 -1 0];
 tform = affinetform3d([R, zeros(3, 1); zeros(1, 3), 1]);
 [pointCloudInstance, camPoses] = logic.reconstruct3D.transformScene(pointCloudInstance, camPoses, tform);
+
+pointCloudInstance = logic.pointcloud.filterFarOutliers(pointCloudInstance, camPoses, maxHardOutlierDistance)
 
 if ~isempty(progressdlg)
     progressdlg.Message = sprintf('Triangulation finished after %.2f seconds', toc);

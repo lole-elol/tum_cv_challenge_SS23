@@ -1,10 +1,10 @@
 # GUI
 
-## Loading Data
+### Loading Data
 
 In order to create a 3D model of a room you need to upload images of this room. You can do this by pressing the **Import** button.
 
-The file explorer will open and you can choose a folder containing all images. The folder should also contain a `cameras.txt` with camera parameters.
+The file explorer will open and you can choose a folder containing a subfolder `images` w
 
 ## 3D Reconstruction
 
