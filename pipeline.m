@@ -1,45 +1,61 @@
-function [models, pc] = pipeline(images, camParams, roomHeigth)
+function [models, pc, scalingFactor] = pipeline(images, camParams, roomHeigth,progress)
 % PIPELINE main function of the pipeline triggered by the GUI
 % perforem teh computation of the 3D point cloud and the detection of the models
 % input:
 %   images: cell array of images
 %   camParams: camera parameters
-%   scalingFactor: scaling factor for the point cloud
+%   roomHeigth: room height in an arbitrary distance unit
 % output:
 %   models: cell array of detected models
 %   pc: point cloud
+%   scalingFactor: scaling factor of the point cloud
 
 
-% load hyper parameters
-load("config/paramsV1.mat");
+%% load hyper parameters
+load("config/paramsV3.mat");
 
-% reconstruct 3D point cloud from images
-[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction);
+%% ================== 3D Reconstruction ==================
+disp("===== 3D Reconstruction =====");
+
+progress.Value = 0;
+progress.Message = 'Reconstructing 3D model';
+% reconstruct 3D point cloud from imagess
+[pointCloudInstance,~,~] = logic.reconstruct3DMultiview(images, camParams, reconstruction, progressdlg=progress);
 
 
-%% Remove outliers
+%% ================= Point Cloud Scaling ==================
+disp("===== Point Cloud Scaling =====");
+
+% Remove outliers
+progress.Value = 0.61;
+progress.Message = 'Filtering point cloud';
 pc = logic.pointcloud.filter(pointCloudInstance, detection.outlierDist);
+% Align point cloud
+progress.Value = 0.62;
+progress.Message = 'Aligning point cloud';
+pc = logic.pointcloud.align(pc);
 
-%% Detect floor and ceiling
-[~, pc, pcFloor, floorPlane] = logic.pointcloud.groundPlane(pc);
-pc = removeInvalidPoints(pc);
+% Detect floor and ceiling
+progress.Value = 0.65;
+progress.Message = 'Detecting ceiling and floor';
+[~, ~, ~, floorPlane] = logic.pointcloud.groundPlane(pc, maxDistance=detection.floorDist);
 
 % Rotate point cloud so that floor is horizontal
 pc = logic.pointcloud.rotate(pc, floorPlane.Normal);
 
-[ceilingPlane, pcCeiling, pc] = logic.pointcloud.ceilPlane(pc, maxDistance=detection.ceilingDist, percentage=detection.ceilingPercentile, refVector=floorPlane.Normal, windowSize= detection.ceilingWindowSize);
+% Detect ceiling
+[ceilingPlane, ~, ~] = logic.pointcloud.ceilPlane(pc, maxDistance=detection.ceilingDist, percentage=detection.ceilingPercentile, refVector=floorPlane.Normal, windowSize=detection.ceilingWindowSize);
 
 % calculate scaling factor
-scalingFactor = logic.pointcloud.scalingFactorFromRoomHeight(floorPlane, ceilingPlane, roomHeigth);
+scalingFactor = logic.pointcloud.scalingFactorFromRoomHeight(ceilingPlane, floorPlane, roomHeigth);
 
-% scale point cloud via scaling factor
-tScaling = affinetform3d([scalingFactor, 0, 0, 0; 0, scalingFactor, 0, 0; 0, 0, scalingFactor, 0; 0, 0, 0, 1]);
-pc = pctransform(pointCloudInstance, tScaling);
+% Scale point cloud
+%pc = logic.pointcloud.scale(pc, scalingFactor);
 
-
-
-% detect models planes and Cuboids
-[models, pc, ~] = logic.modelDetection(pc, detection);
-
-
+%% ================== Model Detection ==================
+disp("===== Model Detection =====");
+progress.Value = 0.8;
+progress.Message = 'Model detection';
+[models, ~, ~] = logic.modelDetection(pc, detection, preprocess=false);
+progress.Value = 1;
 end

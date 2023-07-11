@@ -22,7 +22,7 @@ for i = 2:N
     features = similarityMatrix(index(i-1), :);
     [dist, nextIdx] = min(features);
 
-    disp('Nearest neighbour: ' + string(nextIdx) + ' - Feature: ' + string(dist))
+    %disp('Nearest neighbour: ' + string(nextIdx) + ' - Feature: ' + string(dist))
 
     index(i) = nextIdx;
     similarityMatrix(:, index(i)) = inf;
