@@ -1,28 +1,29 @@
 function [pointCloudInstance, camPoses, tracks] = reconstruct3DMultiview(images, cameraParams, varargin)
 % RECONSTRUCT3DMULTIVIEW Reconstructs a 3D point cloud from multiple images
+%
 % Input:
-%   images - a cell array of images
-%   cameraParams - a cameraParameters object
-%   log - a boolean indicating whether to log the progress
-%   scalingFactor - a factor by which the images are scaled down
-%   numOctaves - the number of octaves used for feature extraction
-%   roiBorder - the border around the image that is ignored for feature extraction
-%   eMaxDistance - the maximum distance from an epipolar line for a point to be considered an inlier
-%   eConfidence - the confidence level for the epipolar geometry
-%   eMaxNumTrials - the maximum number of trials for the epipolar geometry
-%   eValidPointFraction - the minimum fraction of points that must be in front of both cameras for the epipolar geometry to be valid
-%   maxReprojectionError - the maximum reprojection error for a point to be considered valid
-%   presort - the type of presorting to use. Options are: FFT2, HIST, PCA
-%   presortNearestNeighbors - whether to presort by nearest neighbors or by 1D features
-%   presortFeatures - the length of the feature vector
-%   presortNormalize - whether to normalize the features before presorting
-%   progressdlg  - a progress dialog object to update
-%   progressdlgMax  - the maximum value of the progress dialog
-%   
+%   images: a cell array of images
+%   cameraParams: a cameraParameters object
+%   log = true: a boolean indicating whether to log the progress
+%   scalingFactor = 0.5: a factor by which the images are scaled down
+%   numOcatves = 20: the number of octaves used for feature extraction
+%   roiBorder = 2: the border around the image that is ignored for feature extraction
+%   eMaxDistance = 5: the maximum distance from an epipolar line for a point to be considered an inlier
+%   eConfidence = 99.6: the confidence level for the epipolar geometry
+%   eMaxNumTrials = 5000: the maximum number of trials for the epipolar geometry
+%   eValidPointFraction = 0.8: the minimum fraction of points that must be in front of both cameras for the epipolar geometry to be valid
+%   maxReprojectionError = 20: the maximum reprojection error for a point to be considered valid
+%   presort = 'FFT2': the type of presorting to use. Options are: FFT2, HIST, PCA
+%   presortFeatures = 1: the length of the feature vector
+%   presortNormalize = true: whether to normalize the features before presorting
+%   presortLazy = true: whether to use lazy presorting
+%   progressdlg = []; a progress dialog object to update
+%   progressdlgMax = 0.6: the maximum value of the progress dialog
+%
 % Output:
-%   pointCloudInstance - a pointCloud object
-%   camPoses - a table containing the camera poses
-%   tracks - a table containing the point tracks
+%   pointCloudInstance: a pointCloud object
+%   camPoses: a table containing the camera poses
+%   tracks: a table containing the point tracks
 
 %% === 0. Parse input ===
 p = inputParser;
@@ -69,7 +70,7 @@ progressdlgMax = p.Results.progressdlgMax;
 
 numImages = length(images);
 progressdlgMaxPreprocessing = progressdlgMax * 0.2;
-progressdlgMaxFeatureExtraction = progressdlgMax * 0.4; 
+progressdlgMaxFeatureExtraction = progressdlgMax * 0.4;
 progressdlgMaxMatchingTriangulation = progressdlgMax * 0.4;
 
 tic;

@@ -91,20 +91,20 @@ if testReconstruction
         params = util.getParamsFromTable(paramsTable);
 
         for j = 1:numScenes
-            try
+            %try
                 scene = scenes{j};
                 images = scene{1};
                 cameraParams = scene{2};
                 disp('Running scene ' + string(j) + ' of ' + string(numScenes));
                 tic
-                [testPCs{i}, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams, params{:});
+                [testPCs{j}, camPoses, tracks] = logic.reconstruct3DMultiview(images, cameraParams, params{:});
                 t = toc;
-                outData{i, j} = {testPCs{i}, camPoses, tracks, t};
+                outData{i, j} = {testPCs{j}, camPoses, tracks, t};
                 disp('Time: ' + string(t) + 's');
-            catch
-                disp('Error running scene ' + string(j) + ' of ' + string(numScenes));
-                outData{i, j} = "Error";
-            end
+            %catch
+            %    disp('Error running scene ' + string(j) + ' of ' + string(numScenes));
+            %    outData{i, j} = "Error";
+            %end
         end
     end
     % Save output data
