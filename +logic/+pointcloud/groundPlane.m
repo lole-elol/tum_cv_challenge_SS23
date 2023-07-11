@@ -15,7 +15,7 @@ p.addOptional('maxDistance', 0.3);
 p.parse(varargin{:});
 maxDistance = p.Results.maxDistance;
 
-[groundPtsIdx,remainingPtCloud,groundPointCloud] = segmentGroundSMRF(ptCloud);
+[groundPtsIdx,remainingPtCloud,groundPointCloud] = segmentGroundSMRF(ptCloud, MaxWindowRadius=10, SlopeThreshold=1, ElevationThreshold=1, ElevationScale=2);
 
 [geoGroundPlanes, groundPlanesPtCloud] = logic.pointcloud.plane(groundPointCloud, maxDistance=maxDistance);
 
