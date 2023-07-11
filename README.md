@@ -1,4 +1,5 @@
 # TUM Computer Vision Challenge SS2023
+[G24_Poster_Small.pdf](https://github.com/lole-elol/tum_cv_challenge_SS23/files/12021697/G24_Poster_Small.pdf)
 
 ## Usage
 
