@@ -25,7 +25,7 @@ featureType = p.Results.featureType;
 sortNearestNeighbors = p.Results.sortNearestNeighbors;
 normalize = p.Results.normalize;
 
-[features, similarity] = logic.similarity(images, featureLength=featureLength, featureType=featureType, normalize=normalize);
+[features, similarity] = logic.reconstruct3D.similarity(images, featureLength=featureLength, featureType=featureType, normalize=normalize);
 
 if sortNearestNeighbors
   % Sort by nearest neighbors

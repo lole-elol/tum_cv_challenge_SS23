@@ -98,16 +98,15 @@ end
 % Modify camera parameters to compensate for image resizing
 cameraParams = logic.reconstruct3D.scaleCameraParameters(cameraParams, scalingFactor, [size(images{1},1), size(images{1},2)]);
 
-% Presort images
-%fprintf('Presorting images\n');
-%images = logic.presort(images, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize, sortNearestNeighbors=presortNearestNeighbors);
+% Compute similarity matrix
 if ~isempty(progressdlg)
     progressdlg.Message = 'Computing similarity matrix';
     progressdlg.Value = progressdlgMaxPreprocessing;
 end
 fprintf('Computing similarity matrix\n')
 imagesLowRes = cellfun(@(x) im2gray(imresize(x, 0.1)), imagesOriginal, 'UniformOutput', false);
-[~, similarityMatrix] = logic.similarity(imagesLowRes, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
+[~, similarityMatrix] = logic.reconstruct3D.similarity(imagesLowRes, featureLength=presortFeatures, featureType=presort, normalize=presortNormalize);
+
 if ~isempty(progressdlg)
     progressdlg.Message = sprintf('Preprocessing finished in %f seconds', toc);
     progressdlg.Value = progressdlgMaxPreprocessing;
@@ -190,7 +189,7 @@ for i=2:numImages
             end
 
             % Find the most similar image
-            currIdxTmp = logic.kNearestNeighbour(similarityMatrix(prevIdx, :), k);
+            currIdxTmp = logic.reconstruct3D.kNearestNeighbour(similarityMatrix(prevIdx, :), k);
 
             % If there are no more images to match use the previous result
             if similarityMatrix(prevIdx, currIdxTmp) == inf

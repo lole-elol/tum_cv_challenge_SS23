@@ -3,6 +3,12 @@
 
 
 function [cameraParams] = calibrateCamera(imageFileFolder, squareSize)
+% CALIBRATECAMERA Generate camera parameters from checkerboard images
+%
+% Inputs:
+%   imageFileFolder: Folder containing checkerboard images
+%   squareSize: Size of checkerboard square in millimeters
+
 % Store the file names in a cell array contained in the folder
 imageFileNames = dir(fullfile(imageFileFolder, '*.jpg'));
 % Concatenate the names with the folder path
