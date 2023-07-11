@@ -18,7 +18,7 @@ More information about the user interface can be found in [+gui/README.md](+gui/
   +reconstruct3D/
 +plotting/
 +util/
-docs/
+config/
 README.txt
 main.m
 pipeline.m
