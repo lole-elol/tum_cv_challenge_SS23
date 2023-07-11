@@ -3,8 +3,8 @@ function [E, relPose, status, inliers] = getEpipolarGeometry(matchedPoints1, mat
 % Input:
 %   matchedPoints1, matchedPoints2: matched points between two images
 %   cameraParams: camera parameters
-%   eMaxDistance = 1.5: max distance for RANSAC
-%   eConfidence = 99.99: confidence for RANSAC
+%   eMaxDistance = 5: max distance for RANSAC
+%   eConfidence = 99.6: confidence for RANSAC
 %   eMaxNumTrials = 1000: max number of trials for RANSAC
 %   eValidPointFraction = 0.8: valid point fraction for RANSAC
 % Output:

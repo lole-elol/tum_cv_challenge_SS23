@@ -53,7 +53,7 @@ if length(cuboids) > 1
   volumesStd = std(volumes);
   volumesMean = mean(volumes);
 
-  inliers = volumes > volumesMean - volumesStd * minInliers;
+  inliers = volumes > volumesMean - volumesStd * minInliers & volumes < volumesMean + volumesStd * minInliers;
 
   cuboids = cuboids(inliers);
 
